@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalDiagnosisMapper">
+
+    <resultMap type="MedicalDiagnosis" id="MedicalDiagnosisResult">
+        <result property="diagnosisId"    column="diagnosis_id"    />
+        <result property="patientId"      column="patient_id"      />
+        <result property="patientName"    column="patient_name"    />
+        <result property="visitDate"      column="visit_date"      />
+        <result property="department"     column="department"      />
+        <result property="doctorName"    column="doctor_name"     />
+        <result property="chiefComplaint" column="chief_complaint" />
+        <result property="presentIllness" column="present_illness" />
+        <result property="diagnosisResult" column="diagnosis_result" />
+        <result property="treatmentPlan" column="treatment_plan"  />
+        <result property="cost"          column="cost"            />
+        <result property="status"         column="status"          />
+        <result property="createBy"       column="create_by"       />
+        <result property="createTime"    column="create_time"     />
+        <result property="updateBy"       column="update_by"       />
+        <result property="updateTime"    column="update_time"     />
+        <result property="remark"         column="remark"          />
+    </resultMap>
+
+    <sql id="selectMedicalDiagnosisVo">
+        select d.diagnosis_id, d.patient_id, p.patient_name, d.visit_date, d.department,
+               d.doctor_name, d.chief_complaint, d.present_illness, d.diagnosis_result,
+               d.treatment_plan, d.cost, d.status, d.create_by, d.create_time,
+               d.update_by, d.update_time, d.remark
+        from medical_diagnosis d
+        left join medical_patient p on d.patient_id = p.patient_id
+    </sql>
+
+    <select id="selectMedicalDiagnosisList" parameterType="MedicalDiagnosis" resultMap="MedicalDiagnosisResult">
+        <include refid="selectMedicalDiagnosisVo"/>
+        <where>
+            <if test="patientId != null">
+                AND d.patient_id = #{patientId}
+            </if>
+            <if test="patientName != null and patientName != ''">
+                AND p.patient_name like concat('%', #{patientName}, '%')
+            </if>
+            <if test="department != null and department != ''">
+                AND d.department = #{department}
+            </if>
+            <if test="doctorName != null and doctorName != ''">
+                AND d.doctor_name like concat('%', #{doctorName}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND d.status = #{status}
+            </if>
+            <if test="beginVisitDate != null and beginVisitDate != ''">
+                AND d.visit_date &gt;= #{beginVisitDate}
+            </if>
+            <if test="endVisitDate != null and endVisitDate != ''">
+                AND d.visit_date &lt;= #{endVisitDate}
+            </if>
+        </where>
+        order by d.visit_date desc
+    </select>
+
+    <select id="selectMedicalDiagnosisById" parameterType="Long" resultMap="MedicalDiagnosisResult">
+        <include refid="selectMedicalDiagnosisVo"/>
+        where d.diagnosis_id = #{diagnosisId}
+    </select>
+
+    <select id="selectMedicalDiagnosisByPatientId" parameterType="Long" resultMap="MedicalDiagnosisResult">
+        <include refid="selectMedicalDiagnosisVo"/>
+        where d.patient_id = #{patientId}
+        order by d.visit_date desc
+    </select>
+
+    <insert id="insertMedicalDiagnosis" parameterType="MedicalDiagnosis" useGeneratedKeys="true" keyProperty="diagnosisId">
+        insert into medical_diagnosis
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="patientId != null">patient_id,</if>
+            <if test="visitDate != null">visit_date,</if>
+            <if test="department != null and department != ''">department,</if>
+            <if test="doctorName != null and doctorName != ''">doctor_name,</if>
+            <if test="chiefComplaint != null and chiefComplaint != ''">chief_complaint,</if>
+            <if test="presentIllness != null and presentIllness != ''">present_illness,</if>
+            <if test="diagnosisResult != null and diagnosisResult != ''">diagnosis_result,</if>
+            <if test="treatmentPlan != null and treatmentPlan != ''">treatment_plan,</if>
+            <if test="cost != null">cost,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="patientId != null">#{patientId},</if>
+            <if test="visitDate != null">#{visitDate},</if>
+            <if test="department != null and department != ''">#{department},</if>
+            <if test="doctorName != null and doctorName != ''">#{doctorName},</if>
+            <if test="chiefComplaint != null and chiefComplaint != ''">#{chiefComplaint},</if>
+            <if test="presentIllness != null and presentIllness != ''">#{presentIllness},</if>
+            <if test="diagnosisResult != null and diagnosisResult != ''">#{diagnosisResult},</if>
+            <if test="treatmentPlan != null and treatmentPlan != ''">#{treatmentPlan},</if>
+            <if test="cost != null">#{cost},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <update id="updateMedicalDiagnosis" parameterType="MedicalDiagnosis">
+        update medical_diagnosis
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="patientId != null">patient_id = #{patientId},</if>
+            <if test="visitDate != null">visit_date = #{visitDate},</if>
+            <if test="department != null and department != ''">department = #{department},</if>
+            <if test="doctorName != null and doctorName != ''">doctor_name = #{doctorName},</if>
+            <if test="chiefComplaint != null">chief_complaint = #{chiefComplaint},</if>
+            <if test="presentIllness != null">present_illness = #{presentIllness},</if>
+            <if test="diagnosisResult != null and diagnosisResult != ''">diagnosis_result = #{diagnosisResult},</if>
+            <if test="treatmentPlan != null">treatment_plan = #{treatmentPlan},</if>
+            <if test="cost != null">cost = #{cost},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            update_time = sysdate()
+        </trim>
+        where diagnosis_id = #{diagnosisId}
+    </update>
+
+    <delete id="deleteMedicalDiagnosisById" parameterType="Long">
+        delete from medical_diagnosis where diagnosis_id = #{diagnosisId}
+    </delete>
+
+    <delete id="deleteMedicalDiagnosisByIds" parameterType="String">
+        delete from medical_diagnosis where diagnosis_id in
+        <foreach item="diagnosisId" collection="array" open="(" separator="," close=")">
+            #{diagnosisId}
+        </foreach>
+    </delete>
+
+</mapper>
