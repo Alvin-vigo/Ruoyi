@@ -20,6 +20,16 @@
             <artifactId>ruoyi-common</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.ruoyi</groupId>
+            <artifactId>ruoyi-system</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <!-- Spring Security（标准若依鉴权） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
         <!-- Spring Boot AOP -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -34,6 +44,15 @@
         <dependency>
             <groupId>com.github.pagehelper</groupId>
             <artifactId>pagehelper-spring-boot-starter</artifactId>
+        </dependency>
+        <!-- Redis（若依标准集成；本机需启动 Redis 服务，应用启动本身不依赖 Redis） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-pool2</artifactId>
         </dependency>
     </dependencies>
 </project>

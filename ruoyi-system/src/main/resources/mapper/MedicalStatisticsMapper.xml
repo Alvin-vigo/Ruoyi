@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalStatisticsMapper">
+
+    <select id="selectPatientTotal" resultType="int">
+        select count(*) from medical_patient
+    </select>
+
+    <select id="selectDiagnosisTotal" resultType="int">
+        select count(*) from medical_diagnosis
+    </select>
+
+    <select id="selectDrugTotal" resultType="int">
+        select count(*) from medical_drug
+    </select>
+
+    <select id="selectRegistrationTotal" resultType="int">
+        select count(*) from medical_registration
+    </select>
+
+    <select id="selectPrescriptionTotal" resultType="int">
+        select count(*) from medical_prescription
+    </select>
+
+    <select id="selectDispensingTotalQty" resultType="int">
+        select ifnull(sum(quantity), 0) from medical_dispensing
+    </select>
+
+    <select id="selectLowStockCount" resultType="int">
+        select count(*) from medical_drug where status != '1' and stock &lt;= #{threshold}
+    </select>
+
+    <select id="selectDiagnosisByDepartment" resultType="map">
+        select department as department, count(*) as count
+        from medical_diagnosis
+        group by department
+        order by count desc
+    </select>
+
+    <select id="selectDrugByCategory" resultType="map">
+        select category as category, count(*) as count
+        from medical_drug
+        group by category
+        order by count desc
+    </select>
+
+    <select id="selectCostByDepartment" resultType="map">
+        select department as department, sum(cost) as totalCost, count(*) as count
+        from medical_diagnosis
+        group by department
+        order by totalCost desc
+    </select>
+
+    <select id="selectCostTrend" resultType="map">
+        select DATE_FORMAT(visit_date, '%Y-%m') as month, sum(cost) as totalCost, count(*) as count
+        from medical_diagnosis
+        group by month
+        order by month
+    </select>
+
+    <select id="selectPatientGenderStats" resultType="map">
+        select gender as gender, count(*) as count
+        from medical_patient
+        group by gender
+        order by count desc
+    </select>
+
+    <select id="selectPatientAgeStats" resultType="map">
+        select
+            case
+                when TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) &lt; 18 then '0-17岁'
+                when TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) between 18 and 39 then '18-39岁'
+                when TIMESTAMPDIFF(YEAR, birth_date, CURDATE()) between 40 and 59 then '40-59岁'
+                else '60岁及以上'
+            end as ageGroup,
+            count(*) as count
+        from medical_patient
+        where birth_date is not null
+        group by ageGroup
+        order by case ageGroup when '0-17岁' then 1 when '18-39岁' then 2 when '40-59岁' then 3 else 4 end
+    </select>
+
+</mapper>

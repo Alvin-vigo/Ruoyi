@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalDispensingMapper">
+
+    <resultMap type="MedicalDispensing" id="DispensingResult">
+        <result property="dispensingId" column="dispensing_id" />
+        <result property="prescriptionId" column="prescription_id" />
+        <result property="itemId" column="item_id" />
+        <result property="drugId" column="drug_id" />
+        <result property="drugName" column="drug_name" />
+        <result property="quantity" column="quantity" />
+        <result property="operator" column="operator" />
+        <result property="dispensingTime" column="dispensing_time" />
+        <result property="status" column="status" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <sql id="selectDispensingVo">
+        select dispensing_id, prescription_id, item_id, drug_id, drug_name, quantity, operator, dispensing_time, status, create_by, create_time from medical_dispensing
+    </sql>
+
+    <select id="selectMedicalDispensingList" parameterType="MedicalDispensing" resultMap="DispensingResult">
+        <include refid="selectDispensingVo"/>
+        <where>
+            <if test="prescriptionId != null">AND prescription_id = #{prescriptionId}</if>
+            <if test="itemId != null">AND item_id = #{itemId}</if>
+            <if test="drugId != null">AND drug_id = #{drugId}</if>
+            <if test="drugName != null and drugName != ''">
+                AND drug_name like concat('%', #{drugName}, '%')
+            </if>
+            <if test="operator != null and operator != ''">AND operator = #{operator}</if>
+        </where>
+        order by dispensing_id
+    </select>
+
+    <select id="selectMedicalDispensingById" parameterType="Long" resultMap="DispensingResult">
+        <include refid="selectDispensingVo"/>
+        where dispensing_id = #{dispensingId}
+    </select>
+
+    <insert id="insertMedicalDispensing" parameterType="MedicalDispensing" useGeneratedKeys="true" keyProperty="dispensingId">
+        insert into medical_dispensing
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="prescriptionId != null">prescription_id,</if>
+            <if test="itemId != null">item_id,</if>
+            <if test="drugId != null">drug_id,</if>
+            <if test="drugName != null and drugName != ''">drug_name,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="operator != null and operator != ''">operator,</if>
+            <if test="dispensingTime != null">dispensing_time,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="prescriptionId != null">#{prescriptionId},</if>
+            <if test="itemId != null">#{itemId},</if>
+            <if test="drugId != null">#{drugId},</if>
+            <if test="drugName != null and drugName != ''">#{drugName},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="operator != null and operator != ''">#{operator},</if>
+            <if test="dispensingTime != null">#{dispensingTime},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <update id="updateMedicalDispensing" parameterType="MedicalDispensing">
+        update medical_dispensing
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="prescriptionId != null">prescription_id = #{prescriptionId},</if>
+            <if test="itemId != null">item_id = #{itemId},</if>
+            <if test="drugId != null">drug_id = #{drugId},</if>
+            <if test="drugName != null and drugName != ''">drug_name = #{drugName},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="operator != null and operator != ''">operator = #{operator},</if>
+            <if test="dispensingTime != null">dispensing_time = #{dispensingTime},</if>
+        </trim>
+        where dispensing_id = #{dispensingId}
+    </update>
+
+    <delete id="deleteMedicalDispensingById" parameterType="Long">
+        delete from medical_dispensing where dispensing_id = #{dispensingId}
+    </delete>
+
+    <delete id="deleteMedicalDispensingByIds" parameterType="Long">
+        delete from medical_dispensing where dispensing_id in
+        <foreach collection="array" item="dispensingId" open="(" separator="," close=")">
+            #{dispensingId}
+        </foreach>
+    </delete>
+
+    <select id="selectByPrescriptionId" parameterType="Long" resultMap="DispensingResult">
+        <include refid="selectDispensingVo"/>
+        where prescription_id = #{prescriptionId}
+        order by dispensing_id
+    </select>
+
+</mapper>

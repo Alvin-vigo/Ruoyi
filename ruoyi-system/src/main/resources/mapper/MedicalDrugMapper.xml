@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalDrugMapper">
+
+    <resultMap type="MedicalDrug" id="MedicalDrugResult">
+        <result property="drugId" column="drug_id" />
+        <result property="drugName" column="drug_name" />
+        <result property="drugCode" column="drug_code" />
+        <result property="category" column="category" />
+        <result property="spec" column="spec" />
+        <result property="manufacturer" column="manufacturer" />
+        <result property="unit" column="unit" />
+        <result property="purchasePrice" column="purchase_price" />
+        <result property="salePrice" column="sale_price" />
+        <result property="stock" column="stock" />
+        <result property="productionDate" column="production_date" />
+        <result property="expiryDate" column="expiry_date" />
+        <result property="status" column="status" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectMedicalDrugVo">
+        select drug_id, drug_name, drug_code, category, spec, manufacturer, unit, purchase_price, sale_price, stock, production_date, expiry_date, status, create_by, create_time, update_by, update_time, remark from medical_drug
+    </sql>
+
+    <select id="selectMedicalDrugList" parameterType="MedicalDrug" resultMap="MedicalDrugResult">
+        <include refid="selectMedicalDrugVo"/>
+        <where>
+            <if test="drugName != null and drugName != ''">
+                AND drug_name like concat('%', #{drugName}, '%')
+            </if>
+            <if test="drugCode != null and drugCode != ''">
+                AND drug_code = #{drugCode}
+            </if>
+            <if test="category != null and category != ''">
+                AND category = #{category}
+            </if>
+            <if test="manufacturer != null and manufacturer != ''">
+                AND manufacturer like concat('%', #{manufacturer}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectMedicalDrugById" parameterType="Long" resultMap="MedicalDrugResult">
+        <include refid="selectMedicalDrugVo"/>
+        where drug_id = #{drugId}
+    </select>
+
+    <select id="selectMedicalDrugLowStock" parameterType="int" resultMap="MedicalDrugResult">
+        <include refid="selectMedicalDrugVo"/>
+        where stock &lt;= #{threshold}
+        order by stock asc
+    </select>
+
+    <select id="selectMedicalDrugNearExpiry" parameterType="int" resultMap="MedicalDrugResult">
+        <include refid="selectMedicalDrugVo"/>
+        where status != '1'
+          and expiry_date is not null
+          and expiry_date &lt;= DATE_ADD(CURDATE(), INTERVAL #{warnDays} DAY)
+        order by expiry_date asc
+    </select>
+
+    <insert id="insertMedicalDrug" parameterType="MedicalDrug" useGeneratedKeys="true" keyProperty="drugId">
+        insert into medical_drug
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="drugName != null and drugName != ''">drug_name,</if>
+            <if test="drugCode != null">drug_code,</if>
+            <if test="category != null">category,</if>
+            <if test="spec != null">spec,</if>
+            <if test="manufacturer != null">manufacturer,</if>
+            <if test="unit != null">unit,</if>
+            <if test="purchasePrice != null">purchase_price,</if>
+            <if test="salePrice != null">sale_price,</if>
+            <if test="stock != null">stock,</if>
+            <if test="productionDate != null">production_date,</if>
+            <if test="expiryDate != null">expiry_date,</if>
+            <if test="status != null">status,</if>
+            <if test="createBy != null">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="drugName != null and drugName != ''">#{drugName},</if>
+            <if test="drugCode != null">#{drugCode},</if>
+            <if test="category != null">#{category},</if>
+            <if test="spec != null">#{spec},</if>
+            <if test="manufacturer != null">#{manufacturer},</if>
+            <if test="unit != null">#{unit},</if>
+            <if test="purchasePrice != null">#{purchasePrice},</if>
+            <if test="salePrice != null">#{salePrice},</if>
+            <if test="stock != null">#{stock},</if>
+            <if test="productionDate != null">#{productionDate},</if>
+            <if test="expiryDate != null">#{expiryDate},</if>
+            <if test="status != null">#{status},</if>
+            <if test="createBy != null">#{createBy},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <update id="updateMedicalDrug" parameterType="MedicalDrug">
+        update medical_drug
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="drugName != null and drugName != ''">drug_name = #{drugName},</if>
+            <if test="drugCode != null">drug_code = #{drugCode},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="spec != null">spec = #{spec},</if>
+            <if test="manufacturer != null">manufacturer = #{manufacturer},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="purchasePrice != null">purchase_price = #{purchasePrice},</if>
+            <if test="salePrice != null">sale_price = #{salePrice},</if>
+            <if test="stock != null">stock = #{stock},</if>
+            <if test="productionDate != null">production_date = #{productionDate},</if>
+            <if test="expiryDate != null">expiry_date = #{expiryDate},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="remark != null">remark = #{remark},</if>
+            <if test="updateBy != null">update_by = #{updateBy},</if>
+            update_time = sysdate()
+        </trim>
+        where drug_id = #{drugId}
+    </update>
+
+    <delete id="deleteMedicalDrugById" parameterType="Long">
+        delete from medical_drug where drug_id = #{drugId}
+    </delete>
+
+    <delete id="deleteMedicalDrugByIds" parameterType="String">
+        delete from medical_drug where drug_id in
+        <foreach item="drugId" collection="array" open="(" separator="," close=")">
+            #{drugId}
+        </foreach>
+    </delete>
+
+    <update id="decrementStock">
+        UPDATE medical_drug SET stock = stock - #{quantity} WHERE drug_id = #{drugId} AND stock &gt;= #{quantity}
+    </update>
+
+    <update id="incrementStock">
+        UPDATE medical_drug SET stock = stock + #{quantity} WHERE drug_id = #{drugId}
+    </update>
+
+</mapper>

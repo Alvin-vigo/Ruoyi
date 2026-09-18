@@ -1,0 +1,32 @@
+# ruoyi-ai / Python 依赖清单
+# 目标环境：Python 3.11（本机），也兼容 3.9+
+# 建议：python -m venv .venv 后安装，避免污染全局环境
+
+# ============ 核心：服务启动必需 ============
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.0.0
+requests>=2.31.0
+numpy>=1.24.0
+# 【易漏】FastAPI 解析 multipart 上传必须装它，缺了 /chest_xray 会报 422；大纲里没列出
+python-multipart>=0.0.6
+
+# ============ 模块② 风险预测（无需 GPU，秒级可跑） ============
+scikit-learn>=1.3.0
+pandas>=2.0.0
+joblib>=1.3.0
+
+# ============ 模块③ 胸片图像 ============
+pillow>=10.0.0
+# PyTorch 请在安装完上面基础包后单独安装，避免 pip 解析超时：
+#   CPU 版（无显卡）：
+#     pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   CUDA 版（RTX4050 推荐，本机有显卡走这个）：
+#     pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+torch>=2.0.0
+torchvision>=0.15.0
+
+# ============ 模块④ RAG 向量检索 ============
+# 首次运行会自动下载 embedding 模型（约 470MB，多语言版），国内可加 -i 清华源
+chromadb>=0.4.0
+sentence-transformers>=2.2.0

@@ -1,0 +1,28 @@
+// 若依常用辅助类（精简版）
+// 查询条件区域
+.query-form {
+  margin-bottom: 15px;
+}
+
+// 间距
+.mb8 {
+  margin-bottom: 8px;
+}
+.mt8 {
+  margin-top: 8px;
+}
+.ml10 {
+  margin-left: 10px;
+}
+
+// 文本省略
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// 通用卡片内边距
+.box-card {
+  margin-bottom: 15px;
+}

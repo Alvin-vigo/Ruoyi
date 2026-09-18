@@ -58,4 +58,12 @@ public interface MedicalPatientMapper {
      * @return 结果
      */
     public int deleteMedicalPatientByIds(Long[] patientIds);
+
+    /**
+     * 身份证号唯一性校验：统计同身份证号且非当前记录的患者数量
+     *
+     * @param medicalPatient 含 idCard 与 patientId（更新时排除自身）
+     * @return 匹配数量（0 表示可用）
+     */
+    public int checkIdCardUnique(MedicalPatient medicalPatient);
 }

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalChestXrayMapper">
+
+    <resultMap type="MedicalChestXray" id="MedicalChestXrayResult">
+        <id     property="xrayId"        column="xray_id"        />
+        <result property="patientId"     column="patient_id"     />
+        <result property="imgUrl"        column="img_url"        />
+        <result property="predictResult" column="predict_result" />
+        <result property="resultLabel"   column="result_label"   />
+        <result property="confidence"    column="confidence"     />
+        <result property="probNormal"    column="prob_normal"    />
+        <result property="probAbnormal"  column="prob_abnormal"  />
+        <result property="device"        column="device"         />
+        <result property="elapsedMs"     column="elapsed_ms"     />
+        <result property="createBy"      column="create_by"      />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectMedicalChestXrayVo">
+        select xray_id, patient_id, img_url, predict_result, result_label, confidence,
+               prob_normal, prob_abnormal, device, elapsed_ms, create_by, create_time
+        from medical_chest_xray
+    </sql>
+
+    <sql id="queryChestXrayWhere">
+        <if test="patientId != null">
+            AND patient_id = #{patientId}
+        </if>
+        <if test="resultLabel != null and resultLabel != ''">
+            AND result_label = #{resultLabel}
+        </if>
+    </sql>
+
+    <select id="selectMedicalChestXrayById" parameterType="Long" resultMap="MedicalChestXrayResult">
+        <include refid="selectMedicalChestXrayVo"/>
+        where xray_id = #{xrayId}
+    </select>
+
+    <select id="selectMedicalChestXrayByIds" parameterType="Long" resultMap="MedicalChestXrayResult">
+        <include refid="selectMedicalChestXrayVo"/>
+        where xray_id in
+        <foreach collection="array" item="xrayId" open="(" separator="," close=")">
+            #{xrayId}
+        </foreach>
+    </select>
+
+    <select id="selectMedicalChestXrayList" parameterType="MedicalChestXray" resultMap="MedicalChestXrayResult">
+        <include refid="selectMedicalChestXrayVo"/>
+        <where>
+            <include refid="queryChestXrayWhere"/>
+        </where>
+        order by xray_id desc
+    </select>
+
+    <insert id="insertMedicalChestXray" parameterType="MedicalChestXray" useGeneratedKeys="true" keyProperty="xrayId">
+        insert into medical_chest_xray
+        (patient_id, img_url, predict_result, result_label, confidence, prob_normal,
+         prob_abnormal, device, elapsed_ms, create_by, create_time)
+        values
+        (#{patientId}, #{imgUrl}, #{predictResult}, #{resultLabel}, #{confidence}, #{probNormal},
+         #{probAbnormal}, #{device}, #{elapsedMs}, #{createBy}, sysdate())
+    </insert>
+
+    <delete id="deleteMedicalChestXrayById" parameterType="Long">
+        delete from medical_chest_xray where xray_id = #{xrayId}
+    </delete>
+
+    <delete id="deleteMedicalChestXrayByIds" parameterType="Long">
+        delete from medical_chest_xray where xray_id in
+        <foreach collection="array" item="xrayId" open="(" separator="," close=")">
+            #{xrayId}
+        </foreach>
+    </delete>
+
+</mapper>

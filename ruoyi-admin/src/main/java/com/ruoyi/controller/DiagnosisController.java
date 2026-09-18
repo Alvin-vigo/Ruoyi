@@ -5,12 +5,15 @@ import com.github.pagehelper.PageInfo;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.core.page.TableSupport;
+import com.ruoyi.common.utils.poi.ExcelUtil;
 import com.ruoyi.system.domain.MedicalDiagnosis;
 import com.ruoyi.system.service.IMedicalDiagnosisService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -77,6 +80,24 @@ public class DiagnosisController {
     @DeleteMapping("/{diagnosisIds}")
     public AjaxResult remove(@PathVariable Long[] diagnosisIds) {
         return toAjax(medicalDiagnosisService.deleteMedicalDiagnosisByIds(diagnosisIds));
+    }
+
+    /**
+     * 导出诊疗信息
+     */
+    @RequestMapping(value = "/export", method = { RequestMethod.GET, RequestMethod.POST })
+    public void export(HttpServletResponse response, MedicalDiagnosis medicalDiagnosis) throws IOException {
+        List<MedicalDiagnosis> list = medicalDiagnosisService.selectMedicalDiagnosisList(medicalDiagnosis);
+        ExcelUtil<MedicalDiagnosis> util = new ExcelUtil<>(MedicalDiagnosis.class);
+        util.exportExcel(response, list, "诊疗信息数据");
+    }
+
+    /**
+     * 诊疗费用明细汇总（总数、总额、均值）
+     */
+    @GetMapping("/fee-summary")
+    public AjaxResult feeSummary(MedicalDiagnosis medicalDiagnosis) {
+        return AjaxResult.success(medicalDiagnosisService.selectMedicalDiagnosisFeeSummary(medicalDiagnosis));
     }
 
     /**

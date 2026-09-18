@@ -20,5 +20,16 @@
             <artifactId>ruoyi-common</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <!-- MyBatis Starter（标准若依 system 模块依赖；业务 Mapper 接口需要） -->
+        <dependency>
+            <groupId>org.mybatis.spring.boot</groupId>
+            <artifactId>mybatis-spring-boot-starter</artifactId>
+        </dependency>
+        <!-- 单元测试：JUnit5 + Mockito（scope=test，不进生产包） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

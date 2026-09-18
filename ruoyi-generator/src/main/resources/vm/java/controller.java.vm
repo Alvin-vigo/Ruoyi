@@ -1,0 +1,82 @@
+package ${packageName}.controller;
+
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.ruoyi.common.core.domain.AjaxResult;
+import com.ruoyi.common.core.page.TableDataInfo;
+import com.ruoyi.common.core.page.TableSupport;
+import ${packageName}.domain.${ClassName};
+import ${packageName}.service.I${ClassName}Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+/**
+ * ${functionName}Controller
+ *
+ * @author ${author}
+ */
+@RestController
+@RequestMapping("/${moduleName}/${businessName}")
+public class ${ClassName}Controller {
+
+    @Autowired
+    private I${ClassName}Service ${className}Service;
+
+    /**
+     * 查询${functionName}列表
+     */
+    @GetMapping("/list")
+    public TableDataInfo list(${ClassName} ${className},
+                              @RequestParam(defaultValue = "1") Integer pageNum,
+                              @RequestParam(defaultValue = "10") Integer pageSize) {
+        PageHelper.startPage(pageNum, pageSize);
+        List<${ClassName}> list = ${className}Service.select${ClassName}List(${className});
+        PageInfo<${ClassName}> pageInfo = new PageInfo<>(list);
+        return TableSupport.getDataTable(list, pageInfo.getTotal());
+    }
+
+    /**
+     * 获取${functionName}详细信息
+     */
+    @GetMapping(value = "/{${pkColumn.javaField}}")
+    public AjaxResult getInfo(@PathVariable("${pkColumn.javaField}") ${pkColumn.javaType} ${pkColumn.javaField}) {
+        return AjaxResult.success(${className}Service.select${ClassName}ById(${pkColumn.javaField}));
+    }
+
+    /**
+     * 新增${functionName}
+     */
+    @PostMapping
+    public AjaxResult add(@Validated @RequestBody ${ClassName} ${className}) {
+        return toAjax(${className}Service.insert${ClassName}(${className}));
+    }
+
+    /**
+     * 修改${functionName}
+     */
+    @PutMapping
+    public AjaxResult edit(@Validated @RequestBody ${ClassName} ${className}) {
+        return toAjax(${className}Service.update${ClassName}(${className}));
+    }
+
+    /**
+     * 删除${functionName}
+     */
+    @DeleteMapping("/{${pkColumn.javaField}s}")
+    public AjaxResult remove(@PathVariable ${pkColumn.javaType}[] ${pkColumn.javaField}s) {
+        return toAjax(${className}Service.delete${ClassName}ByIds(${pkColumn.javaField}s));
+    }
+
+    /**
+     * 将操作结果转换为 AjaxResult
+     *
+     * @param rows 操作行数
+     * @return 结果
+     */
+    private AjaxResult toAjax(int rows) {
+        return rows > 0 ? AjaxResult.success() : AjaxResult.error();
+    }
+}

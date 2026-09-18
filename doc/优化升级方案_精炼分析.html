@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>若依医疗 · 优化升级精炼分析</title>
+<style>
+  body { margin:0; font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#f5f7fa; color:#2c3e50; line-height:1.7; }
+  .wrap { max-width:1080px; margin:0 auto; padding:40px 28px 80px; }
+  h1 { font-size:28px; border-bottom:3px solid #409eff; padding-bottom:12px; }
+  h2 { font-size:21px; margin-top:38px; color:#1f2d3d; border-left:5px solid #409eff; padding-left:12px; }
+  h3 { font-size:17px; color:#34495e; margin-top:24px; }
+  .lead { background:#ecf5ff; border:1px solid #b3d8ff; padding:16px 20px; border-radius:8px; font-size:15px; }
+  table { width:100%; border-collapse:collapse; margin:18px 0; font-size:14px; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+  th,td { border:1px solid #e0e6ed; padding:10px 12px; text-align:left; vertical-align:top; }
+  th { background:#f0f4f8; font-weight:600; }
+  .tag { display:inline-block; padding:2px 9px; border-radius:11px; font-size:12px; font-weight:600; }
+  .done { background:#e1f3d8; color:#529b2e; }
+  .keep { background:#e1f3d8; color:#529b2e; }
+  .mod  { background:#faecd8; color:#c87c2e; }
+  .drop { background:#fde2e2; color:#c0392b; }
+  .wait { background:#e9e9eb; color:#7f8c9b; }
+  .p0 { background:#fde2e2; color:#c0392b; } .p1 { background:#faecd8; color:#c87c2e; } .p2 { background:#e9e9eb; color:#7f8c9b; }
+  code { background:#f4f4f5; padding:1px 6px; border-radius:4px; font-size:13px; color:#d63384; }
+  .card { background:#fff; border:1px solid #e0e6ed; border-radius:10px; padding:20px 24px; margin:18px 0; }
+  .muted { color:#8a94a6; font-size:13px; }
+  ul { margin:10px 0; } li { margin:6px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>若依医疗管理系统 · 优化升级精炼分析</h1>
+
+<div class="lead">
+<strong>结论先行：</strong>你的路线图方向基本正确，但有三个"假缺口"——<b>③ AI 病历填充</b>和<b>⑬ 脱敏</b>在前几轮已经落地，<b>④ RBAC</b> 后端登录链路已就绪只差角色与菜单配置。真正从零开始的是 <b>① 挂号-处方-发药闭环</b> 和 <b>② 用药安全</b>。我把你的 14 项去重后，<b>砍掉 1 项（⑨ 异步化，当前收益为负）、暂缓 1 项（⑪ Docker，本机已是 Windows+Memurai）</b>，并<b>新增 6 个你没想到的含金量点</b>（原子库存扣减、单据号生成、操作审计、doc.html 404、输入校验、数据级越权防护）。下面逐条审判。
+</div>
+
+<h2>一、现状体检：哪些已经做了，别重复造轮子</h2>
+<table>
+<tr><th>项目</th><th>真实状态</th><th>备注</th></tr>
+<tr><td>③ AI 病历一键填充诊疗记录</td><td><span class="tag done">已完成</span></td><td><code>diagnosis/index.vue</code> 已有「AI 辅助写病历」按钮，把主诉/现病史/诊断建议回填到诊疗表单，医生微调保存。</td></tr>
+<tr><td>⑬ 手机号/身份证脱敏</td><td><span class="tag done">已完成</span></td><td>患者列表已用 <code>maskId / maskPhone</code> 掩码展示。</td></tr>
+<tr><td>④ 原生登录 + RBAC</td><td><span class="tag mod">半成品</span></td><td>Spring Security 登录链路、BCrypt、token 已就绪；但只有 <code>admin</code> / <code>common</code> 两角色，医生/护士/药剂师未建，菜单权限未分配，验证码未开。</td></tr>
+<tr><td>① 挂号/处方/发药</td><td><span class="tag drop">完全空白</span></td><td>无号源、无处方、无发药表；<code>medical_drug</code> 有 <code>stock</code> 字段但只能手工改。</td></tr>
+<tr><td>② 用药安全校验</td><td><span class="tag drop">空白</span></td><td><code>allergy_history</code> 字段已存在，但没有规则引擎去匹配药品禁忌。</td></tr>
+<tr><td>P1 AI 亮点（⑤⑥⑦⑧）</td><td><span class="tag wait">空白·需模型</span></td><td>Grad-CAM / SHAP / 模型对比 / RAG 混合均需先训练或装依赖，属论文投资。</td></tr>
+</table>
+
+<h2>二、对你的 14 项逐条审判</h2>
+<table>
+<tr><th>项</th><th>你的原评级</th><th>我的 verdict</th><th>理由</th></tr>
+<tr><td>① 挂号+处方+发药联动</td><td>P0 必做</td><td><span class="tag keep">保留·必做</span></td><td>最大缺口，闭环核心。改造点：把"号源排班"简化为一张排班表 + 原子占用（避免 UI 爆炸），<b>发药必须原子扣减库存防超卖</b>。</td></tr>
+<tr><td>② 处方用药安全校验</td><td>P0 必做</td><td><span class="tag keep">保留·必做</span></td><td>过敏史字段已就绪，十几行规则即可命中"青霉素过敏"告警，医疗业务理解拉满。</td></tr>
+<tr><td>③ AI 病历填充</td><td>P0 必做</td><td><span class="tag done">已完成</span></td><td>别重做。可增强：采纳时直接落库一条诊疗记录（而非仅回填表单）。</td></tr>
+<tr><td>④ RBAC 四角色</td><td>P0 必做</td><td><span class="tag mod">保留·改造</span></td><td>只需 admin+医生+护士+药剂师四角 + 菜单权限 + 开验证码；不要过度设计。</td></tr>
+<tr><td>⑤ Grad-CAM 热力图</td><td>P1</td><td><span class="tag keep">保留</span></td><td>ResNet18 上约 20 行，答辩视觉大杀器。</td></tr>
+<tr><td>⑥ SHAP 特征贡献</td><td>P1</td><td><span class="tag keep">保留</span></td><td>风险可解释性考点，<code>pip install shap</code> 即可。</td></tr>
+<tr><td>⑦ 模型对比实验</td><td>P1</td><td><span class="tag keep">保留</span></td><td>论文核心章节；但需先训练 LR/RF/XGB，工作量集中在数据而非代码。</td></tr>
+<tr><td>⑧ RAG 混合检索</td><td>P1</td><td><span class="tag keep">保留</span></td><td>BM25+向量双路；你已有 retrieve-only 基线，正好当对比组。</td></tr>
+<tr><td>⑨ AI 异步化</td><td>P2</td><td><span class="tag drop">砍掉</span></td><td>当前 Ollama 走降级、请求本就不长，异步化增加复杂度与轮询负担，<b>收益为负</b>。除非演示出现长请求超时再考虑。</td></tr>
+<tr><td>⑩ AI 健康看板</td><td>P2</td><td><span class="tag keep">保留</span></td><td>一屏显示 Ollama/模型/向量库/DB 状态，答辩稳。</td></tr>
+<tr><td>⑪ Docker 部署</td><td>P2</td><td><span class="tag wait">暂缓</span></td><td>本机已是 Windows+Memurai，compose 要把 Memurai 换成 redis 镜像且需重写；附录加分但优先级低，毕业答辩不靠它。</td></tr>
+<tr><td>⑫ 病历结构化 JSON</td><td>P2</td><td><span class="tag keep">保留</span></td><td>比整段文本好编辑；但需 Ollama 支持 JSON 模式，降级模板也要同步改。</td></tr>
+<tr><td>⑬ 脱敏+备份</td><td>P2</td><td><span class="tag mod">部分完成</span></td><td>脱敏已做；<b>备份脚本</b>仍值得加一个 <code>mysqldump</code> 定时 .bat。</td></tr>
+<tr><td>⑭ 测试报告</td><td>P2</td><td><span class="tag keep">保留</span></td><td>JMeter 简单并发压测，论文测试章节直接有数据。</td></tr>
+</table>
+
+<h2>三、我自己挖出的优化点（你没想到，但含金量高）</h2>
+<div class="card">
+<h3>A. 原子库存扣减 / 号源原子占用　<span class="tag p0">P0</span></h3>
+<p>这是最容易被忽略、却最能体现工程严谨的点。<code>stock = stock - qty</code> 先查后改在并发下会<b>超卖</b>；号源 <code>used_num++</code> 会<b>超额挂号</b>。
+正确做法：<code>UPDATE medical_drug SET stock=stock-#{qty} WHERE drug_id=#{id} AND stock &gt;= #{qty}</code>，影响行数=0 即库存不足，事务回滚 + 前端提示。号源同理用 <code>WHERE used_num &lt; total_num</code> 原子自增。答辩时这句话能体现你懂并发安全。</p>
+
+<h3>B. 业务单据号生成　<span class="tag p0">P0</span></h3>
+<p>挂号号、处方号不能随手存。建议 <code>GH + yyyyMMdd + 4位序列</code> / <code>CF + 日期 + 序列</code>，用数据库当日最大号+1 或 UUID 短码，保证可读且唯一。</p>
+
+<h3>C. 关键操作审计日志　<span class="tag p1">P1</span></h3>
+<p>开方、发药、退号、改库存是医疗合规核心，应留痕。可建轻量 <code>medical_audit_log</code>（谁/何时/做了什么/对象），不依赖被裁剪的若依 <code>@Log</code>。</p>
+
+<h3>D. 修复 doc.html 404　<span class="tag p1">P1</span></h3>
+<p>启动类打印 <code>http://localhost:8080/doc.html</code> 但实际没有 Knife4j/Swagger 依赖，打开是 404——答辩演示时很露怯。要么补 Knife4j 依赖让文档真能用，要么把打印去掉/改成正确地址。</p>
+
+<h3>E. 输入校验增强　<span class="tag p2">P2</span></h3>
+<p>手机号、身份证号目前只在前端掩码，后端缺 Bean Validation 格式校验。加 <code>@Pattern</code> 即可，成本低。</p>
+
+<h3>F. 数据级越权防护　<span class="tag p1">P1</span></h3>
+<p>若依 RBAC 只到<b>菜单级</b>，A 医生理论上能看 B 医生的患者/处方。毕设可不强求，但应在文档里明确这是已知边界，必要时按 <code>create_by</code> 加数据过滤。</p>
+</div>
+
+<div class="card" style="border-left:4px solid #E6A23C">
+<h3>G. 【已知边界声明】RBAC 只到菜单级，数据级越权未做　<span class="tag p2">P2 文档</span></h3>
+<p><b>现状（2026-09-17 核对后的真实情况）</b>：本系统的权限控制由「角色 → 菜单 → 路由」三级构成，
+已建 <code>admin / 医生 / 护士 / 药剂师</code> 四类角色并授予 <code>sys_role_menu</code> 菜单权限，
+登录鉴权走 Spring Security + JWT（token 存 Redis）。但：</p>
+<ul>
+<li><b>能控制</b>：某个角色<b>能不能看到</b>某个功能菜单（挂号、处方、发药、排班等）。</li>
+<li><b>不能控制</b>：同一菜单内，<b>能看到谁的数据</b>。例如医生角色登录后可查询并编辑全部患者的诊疗记录，
+系统不会按 <code>create_by</code> 或主治医生字段做行级过滤。</li>
+<li><b>接口层</b>：既有 Controller 均未加 <code>@PreAuthorize</code>，权限校验仅体现在菜单可见性与登录态上。</li>
+</ul>
+<p><b>为什么这样取舍</b>：毕设体量内，数据级权限需要给每张业务表加归属字段、在查询层统一注入过滤条件，
+改动面横跨全部 Mapper 与 Service；收益是「合规完备性」，不是系统能否跑通业务流程。
+因此作为<b>明确的已知边界</b>声明，而非隐藏缺陷。</p>
+<p><b>后续补齐路径（两步即可，约 1 小时）</b>：</p>
+<ol>
+<li>业务表补 <code>create_by</code>（已有）/ 主治医生字段，查询 SQL 追加 <code>AND create_by = #{当前用户}</code>；</li>
+<li>接口层加 <code>@PreAuthorize("@ss.hasPermi('medical:diagnosis:list')")</code>，
+并注册若依的 <code>ss</code> Bean（<code>PermissionService</code>），使越权访问直接返 403。</li>
+</ol>
+<p class="muted">答辩话术：可以主动讲——「权限做到菜单级是刻意的范围控制，数据级越权我列为后续迭代项，
+并在文档里写清了补齐路径」。主动声明边界，比被问到才承认要好得多。</p>
+</div>
+
+<h2>四、去重后的精炼路线图（标注本次落地情况）</h2>
+<table>
+<tr><th>优先级</th><th>项</th><th>本次处理</th></tr>
+<tr><td><span class="tag p0">P0</span></td><td>① 挂号-处方-发药闭环（含原子扣减/占用、单据号）</td><td><b>本次已落地后端+前端</b></td></tr>
+<tr><td><span class="tag p0">P0</span></td><td>② 用药安全校验（过敏史×药品分类）</td><td><b>本次已落地</b></td></tr>
+<tr><td><span class="tag p0">P0</span></td><td>④ RBAC 四角色 + 菜单权限 + 验证码</td><td><b>本次已落地（SQL+配置）</b></td></tr>
+<tr><td><span class="tag p1">P1</span></td><td>⑦ 模型对比实验 / ⑧ RAG 混合检索</td><td>代码预留，需训练/装依赖后做</td></tr>
+<tr><td><span class="tag p1">P1</span></td><td>⑤ Grad-CAM / ⑥ SHAP</td><td>待 AI 服务联调</td></tr>
+<tr><td><span class="tag p1">P1</span></td><td>C 审计日志 / D doc.html 404 / F 数据越权</td><td>D 建议顺手修；C/F 文档注明</td></tr>
+<tr><td><span class="tag p2">P2</span></td><td>⑩ 健康看板 / ⑫ 病历JSON / ⑬ 备份 / ⑭ 压测</td><td>工程化打磨，按需</td></tr>
+<tr><td><span class="tag drop">砍</span></td><td>⑨ 异步化</td><td>收益为负，不做</td></tr>
+<tr><td><span class="tag wait">缓</span></td><td>⑪ Docker</td><td>本机环境不匹配，暂缓</td></tr>
+</table>
+
+<h2>五、本次实际交付</h2>
+<ul>
+<li><b>数据库</b>：新增 5 张业务表（排班/挂号/处方/处方明细/发药）+ 种子；RBAC 三角色与菜单权限 SQL。</li>
+<li><b>后端</b>：5 个 Controller + Service + Mapper（裁剪版惯用法），发药/挂号走<b>原子条件更新</b>，开方/发药做<b>过敏史×药品分类</b>安全告警。</li>
+<li><b>前端</b>：排班管理、挂号管理、处方与发药 三个页面 + 路由 + 菜单。</li>
+<li><b>配置</b>：开启登录验证码；修正启动类 doc.html 打印（或补依赖）。</li>
+</ul>
+
+<h2>五之二、第二轮交付（用药安全与闭环串联，2026-09-17）</h2>
+<ul>
+<li><b>P0-1 发药效期校验</b>：发药前校验 <code>medical_drug.expiry_date</code>，过期药直接拒绝并提示有效期。</li>
+<li><b>P0-2 退药逆向</b>：<code>medical_dispensing</code> 增 <code>status</code> 列，退药原子回滚库存并回退已发量，幂等不重复回滚。</li>
+<li><b>P1-4 处方自动计价</b>：开方时按药品名查 <code>medical_price_item</code> 自动带单价，价目表真正参与业务。</li>
+<li><b>P1-5 看板联动</b>：新增挂号量、处方量、发药量、库存预警数 4 个指标卡。</li>
+<li><b>P1-6 操作审计</b>：新增 <code>medical_audit_log</code>，开方/发药/退药/退号四处留痕。</li>
+<li><b>P1-3 挂号→接诊→诊疗串联</b>：挂号页「开始就诊」按钮，一键生成诊疗草稿（患者/科室/医生/时间预填），
+<code>medical_diagnosis</code> 增 <code>registration_id</code> 建立硬关联。</li>
+<li><b>P2-9 并发压测</b>：20/50 并发下号源与库存均不超卖，对照组（先读后写）复现超卖 —— 详见《测试记录.md》。</li>
+</ul>
+<p class="muted">说明：P1 的 AI 学术化（Grad-CAM/SHAP/对比实验/RAG 混合）需要本地先训练模型与安装 torch/shap，属于论文投资，不阻塞业务闭环，本轮回退到"代码预留 + 文档论证"。</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalPrescriptionItemMapper">
+
+    <resultMap type="MedicalPrescriptionItem" id="ItemResult">
+        <result property="itemId" column="item_id" />
+        <result property="prescriptionId" column="prescription_id" />
+        <result property="drugId" column="drug_id" />
+        <result property="drugName" column="drug_name" />
+        <result property="spec" column="spec" />
+        <result property="quantity" column="quantity" />
+        <result property="price" column="price" />
+        <result property="dosage" column="dosage" />
+        <result property="dispensedQuantity" column="dispensed_quantity" />
+        <result property="allergyWarning" column="allergy_warning" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+    </resultMap>
+
+    <sql id="selectItemVo">
+        select item_id, prescription_id, drug_id, drug_name, spec, quantity, price, dosage, dispensed_quantity, allergy_warning, create_by, create_time from medical_prescription_item
+    </sql>
+
+    <select id="selectMedicalPrescriptionItemList" parameterType="MedicalPrescriptionItem" resultMap="ItemResult">
+        <include refid="selectItemVo"/>
+        <where>
+            <if test="prescriptionId != null">AND prescription_id = #{prescriptionId}</if>
+            <if test="drugId != null">AND drug_id = #{drugId}</if>
+            <if test="drugName != null and drugName != ''">
+                AND drug_name like concat('%', #{drugName}, '%')
+            </if>
+            <if test="dosage != null and dosage != ''">AND dosage = #{dosage}</if>
+        </where>
+        order by item_id
+    </select>
+
+    <select id="selectMedicalPrescriptionItemById" parameterType="Long" resultMap="ItemResult">
+        <include refid="selectItemVo"/>
+        where item_id = #{itemId}
+    </select>
+
+    <select id="selectByPrescriptionId" parameterType="Long" resultMap="ItemResult">
+        <include refid="selectItemVo"/>
+        where prescription_id = #{prescriptionId}
+        order by item_id
+    </select>
+
+    <insert id="insertMedicalPrescriptionItem" parameterType="MedicalPrescriptionItem" useGeneratedKeys="true" keyProperty="itemId">
+        insert into medical_prescription_item
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="prescriptionId != null">prescription_id,</if>
+            <if test="drugId != null">drug_id,</if>
+            <if test="drugName != null and drugName != ''">drug_name,</if>
+            <if test="spec != null and spec != ''">spec,</if>
+            <if test="quantity != null">quantity,</if>
+            <if test="price != null">price,</if>
+            <if test="dosage != null and dosage != ''">dosage,</if>
+            <if test="dispensedQuantity != null">dispensed_quantity,</if>
+            <if test="allergyWarning != null and allergyWarning != ''">allergy_warning,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="prescriptionId != null">#{prescriptionId},</if>
+            <if test="drugId != null">#{drugId},</if>
+            <if test="drugName != null and drugName != ''">#{drugName},</if>
+            <if test="spec != null and spec != ''">#{spec},</if>
+            <if test="quantity != null">#{quantity},</if>
+            <if test="price != null">#{price},</if>
+            <if test="dosage != null and dosage != ''">#{dosage},</if>
+            <if test="dispensedQuantity != null">#{dispensedQuantity},</if>
+            <if test="allergyWarning != null and allergyWarning != ''">#{allergyWarning},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate()
+        </trim>
+    </insert>
+
+    <update id="updateMedicalPrescriptionItem" parameterType="MedicalPrescriptionItem">
+        update medical_prescription_item
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="prescriptionId != null">prescription_id = #{prescriptionId},</if>
+            <if test="drugId != null">drug_id = #{drugId},</if>
+            <if test="drugName != null and drugName != ''">drug_name = #{drugName},</if>
+            <if test="spec != null and spec != ''">spec = #{spec},</if>
+            <if test="quantity != null">quantity = #{quantity},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="dosage != null and dosage != ''">dosage = #{dosage},</if>
+            <if test="dispensedQuantity != null">dispensed_quantity = #{dispensedQuantity},</if>
+            <if test="allergyWarning != null and allergyWarning != ''">allergy_warning = #{allergyWarning},</if>
+        </trim>
+        where item_id = #{itemId}
+    </update>
+
+    <update id="updateDispensed" parameterType="MedicalPrescriptionItem">
+        UPDATE medical_prescription_item SET dispensed_quantity = #{dispensedQuantity} WHERE item_id = #{itemId}
+    </update>
+
+    <delete id="deleteMedicalPrescriptionItemById" parameterType="Long">
+        delete from medical_prescription_item where item_id = #{itemId}
+    </delete>
+
+    <delete id="deleteMedicalPrescriptionItemByIds" parameterType="Long">
+        delete from medical_prescription_item where item_id in
+        <foreach collection="array" item="itemId" open="(" separator="," close=")">
+            #{itemId}
+        </foreach>
+    </delete>
+
+</mapper>

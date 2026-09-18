@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.SysUserMapper">
+
+    <sql id="selectUserColumns">
+        user_id, dept_id, user_name, nick_name, user_type, email, phonenumber, sex,
+        avatar, password, status, del_flag, login_ip, login_date, create_time, update_time, remark
+    </sql>
+
+    <select id="selectUserByUserName" parameterType="String" resultType="SysUser">
+        select
+        <include refid="selectUserColumns"/>
+        from sys_user
+        where user_name = #{userName}
+    </select>
+
+    <select id="selectRoleKeysByUserId" parameterType="Long" resultType="String">
+        select r.role_key
+        from sys_user_role ur
+        left join sys_role r on ur.role_id = r.role_id
+        where ur.user_id = #{userId}
+    </select>
+
+</mapper>

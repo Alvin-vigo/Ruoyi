@@ -1,0 +1,55 @@
+# 构建产物
+target/
+*.jar.original
+
+# Maven 内置工具目录：随项目携带，让新设备免下载（建议保留）
+# 若团队仓库有体积限制，可改为忽略，但换设备就需重新下载 Maven
+# /tools/apache-maven-3.9.6/
+/tools/apache-maven-*/*.zip
+
+# 构建日志
+build*.log
+
+# 前端
+node_modules/
+dist/
+ruoyi-ui/node_modules/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# 日志与临时文件
+*.log
+*.tmp
+*.cache
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============ AI 模块（体积大 / 可重建，不入库） ============
+ruoyi-ai/models/
+ruoyi-ai/data/chroma_db/
+ruoyi-ai/data/uploads/
+*.pkl
+*.pth
+# Python 虚拟环境
+ruoyi-ai/.venv/
+.venv/
+__pycache__/
+*.pyc
+
+# 工作区工具沙箱数据（非项目源码）
+.workbuddy/
+
+# ============ 第三方工具 / 数据集（非源码，体积大，不入库） ============
+# 打包随项目的 Maven 运行时（换设备重新下载即可）
+tools/
+# 胸片 AI 训练/测试数据集（COVID 胸片大图等），与运行无关
+data/

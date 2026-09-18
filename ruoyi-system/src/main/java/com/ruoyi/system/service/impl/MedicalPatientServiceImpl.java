@@ -73,4 +73,17 @@ public class MedicalPatientServiceImpl implements IMedicalPatientService {
     public int deleteMedicalPatientByIds(Long[] patientIds) {
         return medicalPatientMapper.deleteMedicalPatientByIds(patientIds);
     }
+
+    /**
+     * 身份证号唯一性校验（若依标准 checkXxxUnique 约定：返回 "0" 唯一 / "1" 重复）
+     */
+    @Override
+    public String checkIdCardUnique(MedicalPatient medicalPatient) {
+        if (medicalPatient == null || medicalPatient.getIdCard() == null || medicalPatient.getIdCard().trim().isEmpty()) {
+            // 身份证号为空时不做唯一性约束（允许未采集证件号的患者）
+            return "0";
+        }
+        int count = medicalPatientMapper.checkIdCardUnique(medicalPatient);
+        return count > 0 ? "1" : "0";
+    }
 }

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 诊疗信息Service业务层处理
@@ -83,5 +84,16 @@ public class MedicalDiagnosisServiceImpl implements IMedicalDiagnosisService {
     @Override
     public List<MedicalDiagnosis> selectMedicalDiagnosisByPatientId(Long patientId) {
         return medicalDiagnosisMapper.selectMedicalDiagnosisByPatientId(patientId);
+    }
+
+    /**
+     * 统计诊疗费用汇总（总数、总额、均值）
+     *
+     * @param medicalDiagnosis 筛选条件
+     * @return 汇总结果 Map（totalCount / totalCost / avgCost）
+     */
+    @Override
+    public Map<String, Object> selectMedicalDiagnosisFeeSummary(MedicalDiagnosis medicalDiagnosis) {
+        return medicalDiagnosisMapper.selectMedicalDiagnosisFeeSummary(medicalDiagnosis);
     }
 }

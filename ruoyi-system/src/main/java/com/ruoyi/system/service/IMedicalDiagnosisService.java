@@ -3,6 +3,7 @@ package com.ruoyi.system.service;
 import com.ruoyi.system.domain.MedicalDiagnosis;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 诊疗信息Service接口
@@ -58,4 +59,12 @@ public interface IMedicalDiagnosisService {
      * @return 诊疗信息集合
      */
     public List<MedicalDiagnosis> selectMedicalDiagnosisByPatientId(Long patientId);
+
+    /**
+     * 统计诊疗费用汇总（总数、总额、均值）
+     *
+     * @param medicalDiagnosis 筛选条件
+     * @return 汇总结果 Map（totalCount / totalCost / avgCost）
+     */
+    public Map<String, Object> selectMedicalDiagnosisFeeSummary(MedicalDiagnosis medicalDiagnosis);
 }

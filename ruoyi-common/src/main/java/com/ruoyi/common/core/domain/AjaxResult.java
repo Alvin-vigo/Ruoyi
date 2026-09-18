@@ -88,6 +88,16 @@ public class AjaxResult extends HashMap<String, Object> {
     }
 
     /**
+     * 返回成功消息（带数据对象，消息默认为"操作成功"）
+     *
+     * @param data 数据对象
+     * @return 成功消息
+     */
+    public static AjaxResult success(Object data) {
+        return AjaxResult.success("操作成功", data);
+    }
+
+    /**
      * 返回失败消息
      *
      * @return 失败消息
@@ -115,5 +125,28 @@ public class AjaxResult extends HashMap<String, Object> {
      */
     public static AjaxResult error(String msg, Object data) {
         return new AjaxResult(ERROR, msg, data);
+    }
+
+    /**
+     * 获取状态码
+     */
+    public long getCode() {
+        Object value = get(CODE_TAG);
+        return value != null ? ((Number) value).longValue() : 0L;
+    }
+
+    /**
+     * 获取返回消息
+     */
+    public String getMsg() {
+        Object value = get(MSG_TAG);
+        return value != null ? value.toString() : null;
+    }
+
+    /**
+     * 获取返回数据
+     */
+    public Object getData() {
+        return get(DATA_TAG);
     }
 }

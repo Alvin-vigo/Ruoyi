@@ -1,0 +1,15 @@
+-- 菜单 SQL
+insert into sys_menu (menu_name, parent_id, order_num, url, menu_type, visible, perms, icon, create_by, create_time)
+values ('${functionName}', '0', '1', '/${moduleName}/${businessName}', 'C', '0', '${moduleName}:${businessName}:list', 'el-icon-s-order', 'admin', sysdate());
+
+-- 按钮 SQL
+insert into sys_menu (menu_name, parent_id, order_num, url, menu_type, visible, perms, icon, create_by, create_time)
+values ('${functionName}查询', (select menu_id from sys_menu where menu_name='${functionName}' limit 1), '1', '#',  'F', '0', '${moduleName}:${businessName}:query',        '#', 'admin', sysdate());
+insert into sys_menu (menu_name, parent_id, order_num, url, menu_type, visible, perms, icon, create_by, create_time)
+values ('${functionName}新增', (select menu_id from sys_menu where menu_name='${functionName}' limit 1), '2', '#',  'F', '0', '${moduleName}:${businessName}:add',          '#', 'admin', sysdate());
+insert into sys_menu (menu_name, parent_id, order_num, url, menu_type, visible, perms, icon, create_by, create_time)
+values ('${functionName}修改', (select menu_id from sys_menu where menu_name='${functionName}' limit 1), '3', '#',  'F', '0', '${moduleName}:${businessName}:edit',         '#', 'admin', sysdate());
+insert into sys_menu (menu_name, parent_id, order_num, url, menu_type, visible, perms, icon, create_by, create_time)
+values ('${functionName}删除', (select menu_id from sys_menu where menu_name='${functionName}' limit 1), '4', '#',  'F', '0', '${moduleName}:${businessName}:remove',       '#', 'admin', sysdate());
+insert into sys_menu (menu_name, parent_id, order_num, url, menu_type, visible, perms, icon, create_by, create_time)
+values ('${functionName}导出', (select menu_id from sys_menu where menu_name='${functionName}' limit 1), '5', '#',  'F', '0', '${moduleName}:${businessName}:export',       '#', 'admin', sysdate());

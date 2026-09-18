@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalRegistrationMapper">
+
+    <resultMap type="MedicalRegistration" id="RegistrationResult">
+        <result property="registrationId" column="registration_id" />
+        <result property="regNo" column="reg_no" />
+        <result property="patientId" column="patient_id" />
+        <result property="patientName" column="patient_name" />
+        <result property="scheduleId" column="schedule_id" />
+        <result property="dept" column="dept" />
+        <result property="doctorName" column="doctor_name" />
+        <result property="regType" column="reg_type" />
+        <result property="regFee" column="reg_fee" />
+        <result property="regStatus" column="reg_status" />
+        <result property="regTime" column="reg_time" />
+        <result property="createBy" column="create_by" />
+        <result property="createTime" column="create_time" />
+        <result property="updateBy" column="update_by" />
+        <result property="updateTime" column="update_time" />
+        <result property="remark" column="remark" />
+    </resultMap>
+
+    <sql id="selectRegistrationVo">
+        select registration_id, reg_no, patient_id, patient_name, schedule_id, dept, doctor_name, reg_type, reg_fee, reg_status, reg_time, create_by, create_time, update_by, update_time, remark from medical_registration
+    </sql>
+
+    <select id="selectMedicalRegistrationList" parameterType="MedicalRegistration" resultMap="RegistrationResult">
+        <include refid="selectRegistrationVo"/>
+        <where>
+            <if test="regNo != null and regNo != ''">
+                AND reg_no like concat('%', #{regNo}, '%')
+            </if>
+            <if test="patientId != null">AND patient_id = #{patientId}</if>
+            <if test="patientName != null and patientName != ''">
+                AND patient_name like concat('%', #{patientName}, '%')
+            </if>
+            <if test="scheduleId != null">AND schedule_id = #{scheduleId}</if>
+            <if test="dept != null and dept != ''">
+                AND dept like concat('%', #{dept}, '%')
+            </if>
+            <if test="doctorName != null and doctorName != ''">
+                AND doctor_name like concat('%', #{doctorName}, '%')
+            </if>
+            <if test="regType != null and regType != ''">
+                AND reg_type = #{regType}
+            </if>
+            <if test="regStatus != null and regStatus != ''">
+                AND reg_status = #{regStatus}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectMedicalRegistrationById" parameterType="Long" resultMap="RegistrationResult">
+        <include refid="selectRegistrationVo"/>
+        where registration_id = #{registrationId}
+    </select>
+
+    <insert id="insertMedicalRegistration" parameterType="MedicalRegistration" useGeneratedKeys="true" keyProperty="registrationId">
+        insert into medical_registration
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="regNo != null and regNo != ''">reg_no,</if>
+            <if test="patientId != null">patient_id,</if>
+            <if test="patientName != null and patientName != ''">patient_name,</if>
+            <if test="scheduleId != null">schedule_id,</if>
+            <if test="dept != null and dept != ''">dept,</if>
+            <if test="doctorName != null and doctorName != ''">doctor_name,</if>
+            <if test="regType != null and regType != ''">reg_type,</if>
+            <if test="regFee != null">reg_fee,</if>
+            <if test="regStatus != null and regStatus != ''">reg_status,</if>
+            <if test="regTime != null">reg_time,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+            <if test="updateBy != null and updateBy != ''">update_by,</if>
+            update_time,
+            <if test="remark != null and remark != ''">remark,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="regNo != null and regNo != ''">#{regNo},</if>
+            <if test="patientId != null">#{patientId},</if>
+            <if test="patientName != null and patientName != ''">#{patientName},</if>
+            <if test="scheduleId != null">#{scheduleId},</if>
+            <if test="dept != null and dept != ''">#{dept},</if>
+            <if test="doctorName != null and doctorName != ''">#{doctorName},</if>
+            <if test="regType != null and regType != ''">#{regType},</if>
+            <if test="regFee != null">#{regFee},</if>
+            <if test="regStatus != null and regStatus != ''">#{regStatus},</if>
+            <if test="regTime != null">#{regTime},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            sysdate(),
+            <if test="updateBy != null and updateBy != ''">#{updateBy},</if>
+            sysdate(),
+            <if test="remark != null and remark != ''">#{remark},</if>
+        </trim>
+    </insert>
+
+    <update id="updateMedicalRegistration" parameterType="MedicalRegistration">
+        update medical_registration
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="regNo != null and regNo != ''">reg_no = #{regNo},</if>
+            <if test="patientId != null">patient_id = #{patientId},</if>
+            <if test="patientName != null and patientName != ''">patient_name = #{patientName},</if>
+            <if test="scheduleId != null">schedule_id = #{scheduleId},</if>
+            <if test="dept != null and dept != ''">dept = #{dept},</if>
+            <if test="doctorName != null and doctorName != ''">doctor_name = #{doctorName},</if>
+            <if test="regType != null and regType != ''">reg_type = #{regType},</if>
+            <if test="regFee != null">reg_fee = #{regFee},</if>
+            <if test="regStatus != null and regStatus != ''">reg_status = #{regStatus},</if>
+            <if test="regTime != null">reg_time = #{regTime},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = sysdate(),
+            <if test="remark != null and remark != ''">remark = #{remark},</if>
+        </trim>
+        where registration_id = #{registrationId}
+    </update>
+
+    <delete id="deleteMedicalRegistrationById" parameterType="Long">
+        delete from medical_registration where registration_id = #{registrationId}
+    </delete>
+
+    <delete id="deleteMedicalRegistrationByIds" parameterType="Long">
+        delete from medical_registration where registration_id in
+        <foreach collection="array" item="registrationId" open="(" separator="," close=")">
+            #{registrationId}
+        </foreach>
+    </delete>
+
+    <update id="updateRegStatus">
+        UPDATE medical_registration SET reg_status = #{status}, update_time = sysdate() WHERE registration_id = #{id}
+    </update>
+
+</mapper>

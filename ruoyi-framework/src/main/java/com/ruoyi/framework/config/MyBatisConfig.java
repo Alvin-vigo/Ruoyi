@@ -9,6 +9,6 @@ import org.springframework.context.annotation.Configuration;
  * @author ruoyi
  */
 @Configuration
-@MapperScan("com.ruoyi.system.mapper")
+@MapperScan("com.ruoyi.**.mapper")
 public class MyBatisConfig {
 }

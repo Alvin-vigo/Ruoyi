@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>若依医疗 · 下一步完善清单 v1</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#ffffff; --bd:#e3e6ec; --tx:#1f2329; --tx2:#5c6470;
+    --p0:#d93026; --p1:#e8850c; --p2:#1a73e8; --p3:#0b8a5f; --p4:#7a52cc;
+    --ok:#0b8a5f; --warn:#e8850c; --err:#d93026;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:32px 0 80px;background:var(--bg);color:var(--tx);
+       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+       line-height:1.7;font-size:14px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 24px;}
+  h1{font-size:26px;margin:0 0 6px;}
+  .sub{color:var(--tx2);font-size:13px;margin-bottom:28px;}
+  h2{font-size:19px;margin:38px 0 14px;padding-left:11px;border-left:4px solid var(--p2);}
+  h3{font-size:15.5px;margin:22px 0 10px;color:#0f1419;}
+  .card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:18px 20px;margin:14px 0;}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px;background:#fff;}
+  th,td{border:1px solid var(--bd);padding:8px 10px;text-align:left;vertical-align:top;}
+  th{background:#f0f2f5;font-weight:600;}
+  code{background:#f2f4f7;padding:1px 5px;border-radius:4px;font-family:Consolas,Monaco,monospace;font-size:12.5px;color:#b3285c;}
+  pre{background:#1e2430;color:#e6edf3;padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:12.5px;line-height:1.6;}
+  pre code{background:none;color:inherit;padding:0;}
+  .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11.5px;font-weight:600;color:#fff;margin-right:6px;}
+  .t-p0{background:var(--p0)} .t-p1{background:var(--p1)} .t-p2{background:var(--p2)}
+  .t-p3{background:var(--p3)} .t-p4{background:var(--p4)} .t-ok{background:var(--ok)}
+  .t-err{background:var(--err)} .t-warn{background:var(--warn)}
+  .meta{color:var(--tx2);font-size:12.5px;}
+  ul,ol{padding-left:22px;margin:8px 0;}
+  li{margin:4px 0;}
+  .item{border:1px solid var(--bd);border-radius:10px;padding:16px 18px;margin:14px 0;background:#fff;}
+  .item h4{margin:0 0 4px;font-size:15px;}
+  .item .hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+  .kv{margin:6px 0;}
+  .kv b{display:inline-block;min-width:76px;color:var(--tx2);font-weight:600;}
+  .chk{list-style:none;padding-left:0;}
+  .chk li{padding-left:26px;position:relative;}
+  .chk li:before{content:"☐";position:absolute;left:0;font-size:16px;color:var(--tx2);}
+  .note{background:#fff8e6;border:1px solid #f5d78e;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:13px;}
+  .danger{background:#fdf0ef;border:1px solid #f3b5b0;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:13px;}
+  .good{background:#eef8f3;border:1px solid #a8ddc4;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:13px;}
+  .toc{columns:2;font-size:13px;}
+  .toc a{color:var(--p2);text-decoration:none;}
+  .foot{margin-top:40px;color:var(--tx2);font-size:12.5px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>若依医疗 · 下一步完善清单 v1</h1>
+<div class="sub">生成时间：2026-09-15 · 用途：明日照单升级 · 配套：本轮已同步修复 8 个真实缺陷（见第 1 节）</div>
+
+<div class="card">
+<b>目录</b>
+<div class="toc">
+  <a href="#s0">0. 本轮核查结论（先看这个）</a><br>
+  <a href="#s1">1. 本轮已修复的 8 个问题</a><br>
+  <a href="#s2">2. 待你本机验证的 4 件事</a><br>
+  <a href="#s3">3. P0 根因：前端登录体系缺失</a><br>
+  <a href="#s4">4. P1 你点名的两项</a><br>
+  <a href="#s5">5. P2 业务深化</a><br>
+  <a href="#s6">6. P3 系统级能力</a><br>
+  <a href="#s7">7. P4 工程质量与简历包装</a><br>
+  <a href="#s8">8. 明天的执行顺序</a>
+</div>
+</div>
+
+<!-- ============ 0 ============ -->
+<h2 id="s0">0. 本轮核查结论（先看这个）</h2>
+
+<div class="danger">
+<b>结论一：项目目前"能编译"，但按当前代码启动会直接崩。</b><br>
+根因是 <code>application.yml</code> 的 <code>type-aliases-package</code> 只扫了 <code>com.ruoyi.system.domain</code>，
+而上一轮新增的 <code>ruoyi-quartz</code> 模块中 <code>SysJobMapper.xml</code> 用了 <code>type="SysJob"</code> 别名。
+MyBatis 初始化解析 XML 时会抛 <code>Cannot find class: SysJob</code>，<b>Spring 启动失败</b>。已在第 1 节修掉。
+</div>
+
+<div class="danger">
+<b>结论二：前端 ruoyi-ui 目前进不去。</b><br>
+后端是一个<b>重度裁剪骨架</b>——整个项目只有 9 个 Controller（medical 6 + quartz 2 + generator 1），
+<b>没有 SysLoginController / SysUserController / SysMenuController，也没有 Spring Security 配置</b>。
+若依前端启动后调 <code>/login</code>、<code>/getInfo</code>、<code>/getRouters</code> 全部 404，登录页都过不去，
+菜单（包括 <code>medical_menu.sql</code> 种进去的那些）也加载不出来。<br>
+这意味着：<b>不解决这个，后面所有高级功能（顶部小红点、看板图表）都没法演示。</b> 方案见第 3 节。
+</div>
+
+<div class="note">
+<b>结论三：上一轮"种进去的两条定时任务其实是跑不起来的。</b>
+<code>JobInvokeUtil</code> 的解析逻辑是残缺版：无括号的 <code>followupRemindTask.scanOverdueFollowup</code>
+解析方法名返回 <code>null</code>（NPE），带参的 <code>medicalRemindTask.scanLowStock('10')</code> 参数被丢弃
+（<code>NoSuchMethodException</code>）。同时 <code>quartz.sql</code> 用 <code>job_id=1/2</code> 播种，
+而基础库 <code>ry_20231130.sql</code> 已经占用了 1/2/3（系统默认示例任务），<code>NOT EXISTS</code> 判重会导致
+<b>两条业务任务根本插不进去</b>。均已修复。
+</div>
+
+<!-- ============ 1 ============ -->
+<h2 id="s1">1. 本轮已修复的 8 个问题</h2>
+
+<table>
+<thead><tr><th style="width:34px">#</th><th style="width:190px">位置</th><th>问题</th><th style="width:78px">严重度</th></tr></thead>
+<tbody>
+<tr>
+  <td>1</td>
+  <td><code>ruoyi-admin/src/main/resources/application.yml</code></td>
+  <td><code>type-aliases-package</code> 只含 <code>com.ruoyi.system.domain</code>，
+      quartz 的 <code>SysJob</code>/<code>SysJobLog</code> 别名无法解析 → <b>启动直接失败</b>。
+      已改为三个 domain 包逗号分隔。</td>
+  <td><span class="tag t-p0">启动级</span></td>
+</tr>
+<tr>
+  <td>2</td>
+  <td><code>ruoyi-quartz/.../util/JobInvokeUtil.java</code></td>
+  <td>重写为若依官方解析口径：支持无括号 / 带单引号字符串 / boolean / Long / Double / Integer，
+      并按"引号内逗号不切分"切参；方法查找向父类回溯。
+      修复前两条任务 100% 执行失败。</td>
+  <td><span class="tag t-p0">致命</span></td>
+</tr>
+<tr>
+  <td>3</td>
+  <td><code>sql/quartz.sql</code></td>
+  <td>① <code>create table sys_job/sys_job_log</code> 未加 <code>IF NOT EXISTS</code>，与基础库冲突报错；
+      ② 种子任务改用 <code>job_id=100/101</code> + 按 <code>job_name</code> 判重（原来会被基础库 1/2/3 顶掉）。</td>
+  <td><span class="tag t-p0">致命</span></td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>6 个 Controller 的 <code>/export</code></td>
+  <td>前端 <code>this.download()</code> 走 <b>POST</b>，后端全是 <code>@GetMapping</code> → 点导出必 405。
+      已统一改为 <code>@RequestMapping(method={GET,POST})</code>。</td>
+  <td><span class="tag t-p0">高</span></td>
+</tr>
+<tr>
+  <td>5</td>
+  <td><code>ruoyi-ui/src/views/medical/patient/index.vue</code></td>
+  <td>① 调用了 <code>listDiagnosisByPatientId</code> / <code>listFollowupByPatientId</code> 却没 import →
+      点"诊疗历史""随访记录"直接 ReferenceError 白屏；
+      ② <code>data()</code> 缺 <code>followupOpen/followupList/followupLoading/followupPatientName</code> 四个字段（Vue2 不响应）。</td>
+  <td><span class="tag t-p0">高</span></td>
+</tr>
+<tr>
+  <td>6</td>
+  <td><code>ruoyi-system/.../MedicalMessageMapper.xml</code></td>
+  <td><code>deleteMessageByIds</code> 写成 <code>&lt;select&gt;</code> 标签却执行 DELETE，MyBatis 会当查询处理 → 删除失效。已改 <code>&lt;delete&gt;</code>。</td>
+  <td><span class="tag t-p1">中高</span></td>
+</tr>
+<tr>
+  <td>7</td>
+  <td><code>ruoyi-ui/src/views/medical/message/index.vue</code><br>
+      <code>ruoyi-quartz/.../task/FollowupRemindTask.java</code></td>
+  <td>① 工具栏"标记已读/删除"按钮点击时 <code>row</code> 为 undefined → TypeError 崩页面，已加空值保护；
+      ② 随访提醒的 <code>receiver</code> 原本存随访人姓名（"李医生"），而消息中心按<b>登录用户名</b>过滤 →
+      提醒白发、admin 永远看不到，已改为固定系统用户名，姓名只进文案。</td>
+  <td><span class="tag t-p1">中</span></td>
+</tr>
+<tr>
+  <td>8</td>
+  <td><code>sql/medical_menu.sql</code><br>
+      <code>ScheduleUtils</code> / <code>SysJobServiceImpl</code></td>
+  <td>① 监控菜单改为"先查再插"，避免与基础库 menu_id=110 的"定时任务"重复（原来侧边栏会出现两个定时任务）；
+      ② 隐藏裁剪版后端不支持的 7 个监控菜单（在线用户/数据监控/服务监控/缓存监控/缓存列表/操作日志/登录日志）；
+      ③ misfire 策略映射改回若依官方口径；④ "立即执行"改为按 jobId 回查 DB，防止只传 id 时反射拿到空目标。</td>
+  <td><span class="tag t-p2">中</span></td>
+</tr>
+</tbody>
+</table>
+
+<div class="good">
+<b>已核查确认没问题的部分：</b>Mapper 接口 ↔ XML statement 双向一致（11/11，无缺失无孤儿）；
+SpringUtils 具名 Bean 引用全部命中；前后端 URL 全部对齐（含 <code>/monitor/job/log/*</code>）；
+<code>ScheduleConfig</code> 的 JDBC 持久化配置与 <code>QRTZ_</code> 表名前缀正确；
+<code>CronUtils</code> 三个方法齐全；<code>medical_menu.sql</code> 已覆盖 followup / message / 定时任务全部菜单；
+根 <code>pom.xml</code> 的 <code>&lt;modules&gt;</code> 已包含 <code>ruoyi-quartz</code>，
+<code>ruoyi-admin</code> 也已依赖它，<code>@MapperScan("com.ruoyi.**.mapper")</code> 能扫到 quartz 的 Mapper。
+</div>
+
+<!-- ============ 2 ============ -->
+<h2 id="s2">2. 待你本机验证的 4 件事（沙箱无 JDK，我跑不了）</h2>
+
+<ol>
+<li><b>编译</b>：<code>mvn clean install -DskipTests</code>，确认 <code>ruoyi-quartz</code> 出现在 Reactor 列表且 BUILD SUCCESS。</li>
+<li><b>执行 SQL</b>（按此顺序）：
+    <code>ry_20231130.sql</code> → <code>medical_schema.sql</code> → <code>medical_followup.sql</code> →
+    <code>medical_message.sql</code> → <code>quartz.sql</code> → <code>medical_menu.sql</code>。
+    <b>quartz.sql 必须在启动前执行</b>，否则 <code>LocalDataSourceJobStore</code> 找不到 <code>QRTZ_</code> 表会启动失败。</li>
+<li><b>启动后确认</b>：
+    <ul>
+      <li><code>SELECT job_id, job_name, invoke_target, status FROM sys_job;</code> 应看到 100/101 两条业务任务 + 1/2/3 三条系统默认任务。</li>
+      <li>在"定时任务"页对 job 100 点<b>执行一次</b> → 到"定时任务日志"看是否 <code>成功</code>（修复前必失败）。</li>
+      <li>检查 <code>medical_message</code> 表是否新增了逾期/低库存站内信（receiver 应为 <code>admin</code>）。</li>
+    </ul>
+</li>
+<li><b>前端导出</b>：患者 / 诊疗 / 药品 / 随访 / 费用报表五个页面的"导出"按钮逐个点一遍，确认不再 405。</li>
+</ol>
+
+<!-- ============ 3 ============ -->
+<h2 id="s3">3. P0 根因：前端登录体系缺失</h2>
+
+<div class="danger">
+<b>状态更新（2026-09-17）：本节描述的问题已解决。</b>后端已补齐标准若依登录链路（Spring Security + Redis 会话），
+前端登录页 / 守卫 / 401 跳转已接通，<b>路线 A 已完成</b>。因此<b>路线 B（免登录演示模式）已不再需要</b>，
+原静态路由 + bypass token 的实现已拆除。本系统现在需要：本地起 MySQL + Redis，用 admin/admin123 真实登录。
+</div>
+
+<div class="item">
+<div class="hd"><h4>路线 A（推荐 · 半天到一天）：后端补最小鉴权体系</h4><span class="tag t-p0">P0</span><span class="tag t-p2">简历加分</span></div>
+<div class="kv"><b>目标</b>：让若依前端原样跑起来（登录 → 拉菜单 → 渲染动态路由）。</div>
+<div class="kv"><b>要新增</b>：</div>
+<ul>
+  <li><code>ruoyi-system</code> 新增 <code>com.ruoyi.system.domain.SysUser</code>（只留 user_id / user_name / nick_name / password / status / del_flag）、<code>SysUserMapper</code> + XML。</li>
+  <li>新增 <code>SysLoginController</code>：<code>POST /login</code> 返回 <code>{code:200, token:"..."}</code>；<code>GET /getInfo</code> 返回
+      <code>{user:{...}, roles:["admin"], permissions:["*:*:*"]}</code>；<code>GET /getRouters</code> 返回从 <code>sys_menu</code> 查出的菜单树（<code>data: [...]</code>）。</li>
+  <li>新增 <code>SysMenuController</code> / <code>SysMenuService</code>：查 <code>sys_menu</code>（<code>menu_type in ('M','C')</code>、<code>visible='0'</code>、<code>status='0'</code>）组装成前端要的嵌套结构。</li>
+  <li>加 <code>spring-boot-starter-security</code> 或直接写一个 <code>HandlerInterceptor</code>：校验 <code>Authorization</code> 头，白名单放行 <code>/login</code>、<code>/captchaImage</code>（也可直接关掉验证码）。</li>
+  <li>密码校验：演示项目可直接明文比对，或引入 BCrypt（<code>SpringSecurity</code> 自带）。</li>
+</ul>
+<div class="kv"><b>前端改动</b>：几乎不用改——若依前端本来就适配这套接口；只需在 <code>ruoyi-ui/.env.development</code> 确认
+  <code>VUE_APP_BASE_API = 'http://localhost:8080'</code>，若不需要验证码可在 <code>src/views/login.vue</code> 关掉 <code>captchaEnabled</code>。</div>
+<div class="kv"><b>验收</b>：admin 登录成功 → 左侧出现"医疗管理""系统监控"菜单 → 患者/诊疗/药品/随访/站内信/看板/定时任务全部能打开。</div>
+</div>
+
+<div class="item">
+<div class="hd"><h4>路线 B（最快 · 1~2 小时）：前端免登录演示模式</h4><span class="tag t-p0">P0</span><span class="tag t-warn">临时方案</span></div>
+<div class="kv"><b>目标</b>：绕过登录，直接进系统，先把业务页面跑通演示。</div>
+<ul>
+  <li><code>ruoyi-ui/src/permission.js</code>：在路由守卫开头直接 <code>next()</code>，跳过 token 判断与 <code>GetInfo</code>/<code>GenerateRoutes</code>；
+      或保留登录页但 <code>/login</code> 提交时本地伪造 <code>token</code> 写入 Cookie。</li>
+  <li><code>ruoyi-ui/src/router/index.js</code>：把 medical 的 7 个页面 + monitor/job 写成<b>静态路由</b>（<code>component: () =&gt; import('@/views/...')</code>），
+      不再依赖后端 <code>/getRouters</code>。</li>
+  <li><code>ruoyi-ui/src/utils/auth.js</code>：<code>getToken()</code> 恒返回一个假 token；<code>request.js</code> 的 401 拦截先注释掉，避免跳回登录页。</li>
+  <li><code>src/store/modules/user.js</code>：mock 一个 <code>{name:'管理员', roles:['admin'], permissions:['*:*:*']}</code>，
+      这样 <code>v-hasPermi</code> 全部通过，按钮不会被隐藏。</li>
+</ul>
+<div class="kv"><b>代价</b>：没有真实权限控制，简历上只能写"演示模式"，不能写"RBAC 权限体系"。</div>
+</div>
+
+<div class="note">
+<b>顺带修一个小谎</b>：<code>RuoYiMedicalApplication</code> 启动后打印
+"接口文档: http://localhost:8080/doc.html"，但项目<b>没有引入 Knife4j/Swagger 依赖</b>，打开是 404。
+要么补依赖（见 7.1），要么把这句日志改掉——面试官照着点会当场翻车。
+</div>
+
+<!-- ============ 4 ============ -->
+<h2 id="s4">4. P1 你点名的两项</h2>
+
+<!-- 4.1 -->
+<div class="item">
+<div class="hd"><h4>4.1 站内信 → 全局顶部小红点（未读数实时拉）</h4><span class="tag t-p1">P1</span><span class="tag t-p2">点名项</span></div>
+
+<div class="kv"><b>目标</b>：顶栏出现消息铃铛 + 红色未读数字，点开可看最近 5 条，进入消息中心后红点清零。</div>
+
+<div class="kv"><b>后端（3 处）</b></div>
+<ol>
+<li><code>MedicalMessageMapper.xml</code> 新增：
+<pre><code>&lt;select id="countUnread" parameterType="String" resultType="int"&gt;
+    select count(1) from medical_message
+    where receiver = #{receiver} and is_read = '0'
+&lt;/select&gt;
+
+&lt;select id="selectLatestList" resultMap="MedicalMessageResult"&gt;
+    select * from medical_message
+    where receiver = #{receiver}
+    order by create_time desc limit #{limit}
+&lt;/select&gt;</code></pre></li>
+<li><code>IMedicalMessageService</code> / Impl 加 <code>int countUnread(String receiver)</code> 和
+    <code>List&lt;MedicalMessage&gt; selectLatest(String receiver, int limit)</code>。</li>
+<li><code>MessageController</code> 加两个端点（<b>无登录体系时 receiver 先固定 "admin"，等第 3 节做完再改成从 token 取</b>）：
+<pre><code>@GetMapping("/unreadCount")
+public AjaxResult unreadCount() {
+    return AjaxResult.success(messageService.countUnread("admin"));
+}
+
+@GetMapping("/latest")
+public AjaxResult latest(@RequestParam(defaultValue = "5") int limit) {
+    return AjaxResult.success(messageService.selectLatest("admin", limit));
+}</code></pre></li>
+</ol>
+
+<div class="kv"><b>前端（4 处）</b></div>
+<ol>
+<li><code>src/api/medical/message.js</code>：
+<pre><code>export function unreadCount() {
+  return request({ url: '/medical/message/unreadCount', method: 'get' })
+}
+export function latestMessage(limit) {
+  return request({ url: '/medical/message/latest', method: 'get', params: { limit } })
+}</code></pre></li>
+<li>新建 <code>src/store/modules/message.js</code>（Vuex）：
+<pre><code>const state  = { unreadCount: 0, latest: [], timer: null }
+const mutations = {
+  SET_COUNT(s, v){ s.unreadCount = v },
+  SET_LATEST(s, v){ s.latest = v }
+}
+const actions = {
+  refreshUnread({ commit, dispatch }) {
+    unreadCount().then(r =&gt; commit('SET_COUNT', r.data || 0))
+    latestMessage(5).then(r =&gt; commit('SET_LATEST', r.data || []))
+  },
+  startPolling({ dispatch }) {           // 60 秒轮询，页面不可见时不拉
+    dispatch('refreshUnread')
+    setInterval(() =&gt; {
+      if (document.visibilityState === 'visible') dispatch('refreshUnread')
+    }, 60000)
+  }
+}
+export default { namespaced: true, state, mutations, actions }</code></pre>
+    别忘了在 <code>src/store/index.js</code> 的 <code>modules</code> 里注册 <code>message</code>。</li>
+<li><code>src/layout/components/Navbar.vue</code>：在右侧图标区插入铃铛（放在全屏/字号图标之前）：
+<pre><code>&lt;el-popover placement="bottom" width="360" trigger="click"
+            @show="$store.dispatch('message/refreshUnread')"&gt;
+  &lt;div class="msg-pop"&gt;
+    &lt;div v-for="m in latest" :key="m.messageId" class="msg-item"
+         @click="gotoMsg(m)"&gt;
+      &lt;span class="dot" v-if="m.isRead === '0'"&gt;&lt;/span&gt;
+      &lt;b&gt;{{ m.title }}&lt;/b&gt;
+      &lt;p&gt;{{ m.content }}&lt;/p&gt;
+    &lt;/div&gt;
+    &lt;el-empty v-if="!latest.length" description="暂无消息" :image-size="60" /&gt;
+  &lt;/div&gt;
+  &lt;div slot="reference" class="right-menu-item hover-effect"&gt;
+    &lt;el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99"&gt;
+      &lt;i class="el-icon-bell" style="font-size:18px" /&gt;
+    &lt;/el-badge&gt;
+  &lt;/div&gt;
+&lt;/el-popover&gt;</code></pre>
+    <code>computed</code> 里映射 <code>unreadCount</code> / <code>latest</code>，<code>mounted</code> 里
+    <code>this.$store.dispatch('message/startPolling')</code>，点击某条时调
+    <code>updateRead</code> 并把本地计数 <code>setUnreadCount(v-1)</code>。</li>
+<li>轮询启动放在 <code>Navbar.vue</code> 的 <code>mounted</code>（顶栏全局常驻，最适合做全局未读轮询），
+    <code>beforeDestroy</code> 记得 <code>clearInterval</code>。</li>
+</ol>
+
+<div class="kv"><b>升级玩法（想做得更高级就加这些）</b></div>
+<ul>
+  <li><b>轮询 → SSE 推送</b>：后端用 <code>SseEmitter</code> 暴露 <code>GET /medical/message/stream</code>，
+      每次 <code>insertMessage</code> 成功后向该用户的 emitter 推一条；前端
+      <code>new EventSource(...)</code> 监听，红点<b>秒级出现</b>，比轮询高级一个档次（简历上可写"服务端推送"）。</li>
+  <li><b>按类型分色</b>：<code>type=1</code> 低库存橙色、<code>type=2</code> 随访逾期红色，铃铛旁小圆点提示紧急程度。</li>
+  <li><b>未读分类计数</b>：接口返回 <code>{total, lowStock, followupOverdue}</code>，popover 里做成三个 tab。</li>
+  <li><b>消息已读联动</b>：在消息中心点"标记已读"后 <code>this.$store.dispatch('message/refreshUnread')</code>，
+      红点立即减少，不用等 60 秒。</li>
+  <li><b>浏览器通知</b>：<code>Notification API</code>，未读数从 0 变正时弹系统通知（需用户授权）。</li>
+</ul>
+
+<div class="kv"><b>验收</b>：手动往 <code>medical_message</code> 插一条 <code>receiver='admin', is_read='0'</code>，
+60 秒内顶栏出现红色数字；点开看得到内容；进入消息中心后数字归零。</div>
+</div>
+
+<!-- 4.2 -->
+<div class="item">
+<div class="hd"><h4>4.2 随访页 → "仅看逾期"快捷筛选</h4><span class="tag t-p1">P1</span><span class="tag t-p2">点名项</span></div>
+
+<div class="kv"><b>目标</b>：列表顶部一排快捷筛选（全部 / 已逾期 / 今日到期 / 7 天内 / 已完成），
+逾期行标红并显示逾期天数，支持一键顺延。</div>
+
+<div class="kv"><b>后端（3 处）</b></div>
+<ol>
+<li><code>MedicalFollowup</code> 加一个非表字段：
+<pre><code>/** 快捷筛选：overdue=已逾期 today=今日到期 week=7天内 done=已完成 */
+@Transient
+private String quickFilter;</code></pre>
+    （项目没引 JPA 注解的话，直接用 <code>private String quickFilter;</code> 也行，MyBatis 只当普通属性。）</li>
+<li><code>MedicalFollowupMapper.xml</code> 的 <code>selectFollowupList</code> 的 <code>&lt;where&gt;</code> 里追加：
+<pre><code>&lt;if test="quickFilter != null and quickFilter == 'overdue'"&gt;
+    AND status = '0' AND next_followup_date &lt; curdate()
+&lt;/if&gt;
+&lt;if test="quickFilter != null and quickFilter == 'today'"&gt;
+    AND status = '0' AND next_followup_date = curdate()
+&lt;/if&gt;
+&lt;if test="quickFilter != null and quickFilter == 'week'"&gt;
+    AND status = '0'
+    AND next_followup_date &gt;= curdate()
+    AND next_followup_date &lt;= date_add(curdate(), interval 7 day)
+&lt;/if&gt;
+&lt;if test="quickFilter != null and quickFilter == 'done'"&gt;
+    AND status = '1'
+&lt;/if&gt;</code></pre></li>
+<li>顺带给列表 SQL 加一个<b>计算列</b>，前端就能直接显示逾期天数：
+<pre><code>select f.*,
+       case when f.status = '0' and f.next_followup_date &lt; curdate()
+            then datediff(curdate(), f.next_followup_date) else 0 end as overdue_days
+from medical_followup f</code></pre>
+    并在 <code>MedicalFollowup</code> 里加 <code>private Integer overdueDays;</code>。</li>
+<li>（可选）新增批量顺延：
+<code>POST /medical/followup/postpone</code>，入参 <code>{ids:[], days:7}</code>，
+SQL：<code>update medical_followup set next_followup_date = date_add(next_followup_date, interval #{days} day) where followup_id in (...)</code>。</li>
+</ol>
+
+<div class="kv"><b>前端（<code>src/views/medical/followup/index.vue</code>）</b></div>
+<ol>
+<li>工具栏加一行快捷筛选（放在搜索表单上方，比塞进 dialog 更顺手）：
+<pre><code>&lt;el-radio-group v-model="queryParams.quickFilter" size="small"
+                @change="handleQuery"&gt;
+  &lt;el-radio-button label=""&gt;全部&lt;/el-radio-button&gt;
+  &lt;el-radio-button label="overdue"&gt;已逾期&lt;/el-radio-button&gt;
+  &lt;el-radio-button label="today"&gt;今日到期&lt;/el-radio-button&gt;
+  &lt;el-radio-button label="week"&gt;7天内&lt;/el-radio-button&gt;
+  &lt;el-radio-button label="done"&gt;已完成&lt;/el-radio-button&gt;
+&lt;/el-radio-group&gt;</code></pre>
+    注意 <code>data()</code> 的 <code>queryParams</code> 里要<b>先声明</b> <code>quickFilter: ''</code>，否则 Vue2 不响应。</li>
+<li>逾期行标红：<code>&lt;el-table :row-class-name="rowClassName"&gt;</code>，
+<pre><code>rowClassName({ row }) {
+  if (row.status === '0' &amp;&amp; row.overdueDays &gt; 0) return 'row-overdue'
+  return ''
+}</code></pre>
+    样式放 <code>&lt;style scoped&gt;</code> 里：
+<code>.row-overdue { background: #fef0f0; }</code>（若要生效需去掉 scoped 或用 <code>::v-deep</code>）。</li>
+<li>新增"逾期天数"列，<code>&lt;template slot-scope="scope"&gt;</code> 里
+    <code>&lt;span style="color:#d93026"&gt;逾期 {{ scope.row.overdueDays }} 天&lt;/span&gt;</code>。</li>
+<li>（高级）顶部四个统计卡片：总随访 / 已逾期 / 今日到期 / 7天内，点卡片直接切换对应筛选，
+    数字由 <code>/medical/followup/summary</code> 一次性返回。</li>
+<li>（高级）把筛选状态同步到 URL：<code>this.$router.replace({ query: this.queryParams })</code>，
+    刷新页面不丢筛选条件，分享链接也能直达。</li>
+</ol>
+
+<div class="kv"><b>验收</b>：造一条 <code>next_followup_date</code> 为上周、<code>status='0'</code> 的随访记录 →
+点"已逾期"能筛出来且行标红显示"逾期 N 天"；点"全部"又能看到全部。</div>
+</div>
+
+<!-- ============ 5 ============ -->
+<h2 id="s5">5. P2 业务深化</h2>
+
+<div class="item">
+<div class="hd"><h4>5.1 数据看板 ECharts 化</h4><span class="tag t-p2">P2</span></div>
+<div class="kv"><b>现状</b>：<code>medical/statistics/index.vue</code> 目前是数字卡片，视觉冲击不够。</div>
+<ul>
+  <li>装依赖：<code>npm install echarts@5 --save</code>（或 <code>vue-echarts</code>）。</li>
+  <li>新增 4 个图：① 近 12 个月诊疗量/费用双轴折线 ② 科室分布饼图 ③ 患者年龄段柱状图 ④ 药品消耗 Top10 横向条形图。</li>
+  <li>后端 <code>StatisticsController</code> 补对应接口（<code>MedicalStatisticsMapper.xml</code> 已有分组统计基础，照着加即可）。</li>
+  <li>细节：图表加 <code>loading</code> 骨架屏、窗口 resize 时 <code>chart.resize()</code>、切换日期范围自动重绘。</li>
+</ul>
+</div>
+
+<div class="item">
+<div class="hd"><h4>5.2 患者 360° 档案页</h4><span class="tag t-p2">P2</span></div>
+<ul>
+  <li>新页面 <code>medical/patient/profile.vue</code>：左侧患者基本信息卡（头像/年龄/性别/联系电话/过敏史），
+      右侧 Tab：诊疗记录 / 随访记录 / 费用明细 / 时间轴。</li>
+  <li>时间轴用 <code>el-timeline</code> 把诊疗、随访、缴费事件按时间倒序串起来，这是最有"产品感"的一屏。</li>
+  <li>后端加 <code>GET /medical/patient/profile/{patientId}</code> 一次返回四块数据，避免前端四连请求。</li>
+</ul>
+</div>
+
+<div class="item">
+<div class="hd"><h4>5.3 药品出入库流水</h4><span class="tag t-p2">P2</span></div>
+<ul>
+  <li>新表 <code>medical_stock_log</code>（log_id / drug_id / change_type 入库·出库·盘点 / change_num / before_num / after_num / operator / create_time / remark）。</li>
+  <li>改库存时必须在同一事务里写流水，否则库存对不上说不清——这是面试常问点。</li>
+  <li>药品页加"出入库"按钮 + 流水抽屉，支持按药品、按时间筛选。</li>
+</ul>
+</div>
+
+<div class="item">
+<div class="hd"><h4>5.4 随访计划自动排程</h4><span class="tag t-p2">P2</span></div>
+<ul>
+  <li>诊疗记录新增时，按病种规则自动生成一条随访计划（如"高血压 → 30 天后电话随访"），
+      规则写进 <code>sys_dict_data</code> 或一张配置表，别写死在代码里。</li>
+  <li>或做成定时任务：<code>FollowupPlanTask.autoCreate()</code> 每天 07:00 扫描昨日新增诊疗并生成随访。</li>
+</ul>
+</div>
+
+<!-- ============ 6 ============ -->
+<h2 id="s6">6. P3 系统级能力</h2>
+
+<table>
+<thead><tr><th style="width:150px">项目</th><th>要点</th><th style="width:70px">价值</th></tr></thead>
+<tbody>
+<tr><td><b>6.1 操作日志 AOP</b></td>
+    <td>自定义 <code>@Log</code> 注解 + <code>Aspect</code>，记录操作人 / 时间 / 接口 / 参数 / 耗时 / IP，落 <code>sys_oper_log</code>。
+        用 <code>@Around</code> 包住 Controller，异常也记录。</td>
+    <td><span class="tag t-p2">高</span></td></tr>
+<tr><td><b>6.2 数据字典</b></td>
+    <td>建 <code>sys_dict_type</code> / <code>sys_dict_data</code>，把性别、随访方式、药品剂型、科室等枚举化。
+        前端用若依自带的 <code>DictTag</code> 组件渲染。</td>
+    <td><span class="tag t-p2">高</span></td></tr>
+<tr><td><b>6.3 文件上传</b></td>
+    <td>本地存储版：<code>application.yml</code> 配 <code>profile: D:/ruoyi/uploadPath</code>，
+        加 <code>CommonController.upload</code> + 资源映射 <code>addResourceHandlers</code>。
+        患者头像、诊疗附件都能用。</td>
+    <td><span class="tag t-p3">中</span></td></tr>
+<tr><td><b>6.4 Excel 导入</b></td>
+    <td><code>ExcelUtil.importTemplate</code> + <code>@Excel</code> 注解，做患者/药品批量导入，
+        带"导入失败行号提示"。<b>配合 6.1 日志更好看。</b></td>
+    <td><span class="tag t-p3">中</span></td></tr>
+<tr><td><b>6.5 Redis 缓存</b></td>
+    <td>看板统计、字典、药品列表加 <code>@Cacheable</code>，变更时 <code>@CacheEvict</code>。
+        登录会话 token 已强依赖 Redis（标准若依），<b>本地必须起 Redis</b>，否则登录接口会失败。</td>
+    <td><span class="tag t-p3">中</span></td></tr>
+<tr><td><b>6.6 接口限流</b></td>
+    <td>基于 IP 的 <code>HandlerInterceptor</code> + Guava RateLimiter，或简单计数器。
+        导出接口优先加，防刷爆数据库连接池。</td>
+    <td><span class="tag t-p3">中</span></td></tr>
+<tr><td><b>6.7 逻辑删除</b></td>
+    <td>所有 medical 表加 <code>del_flag</code>，删除改 UPDATE 而非 DELETE。
+        医疗数据合规上更说得通，面试能聊。</td>
+    <td><span class="tag t-p3">中</span></td></tr>
+</tbody>
+</table>
+
+<!-- ============ 7 ============ -->
+<h2 id="s7">7. P4 工程质量与简历包装</h2>
+
+<div class="item">
+<div class="hd"><h4>7.1 把"假接口文档"变成真的</h4><span class="tag t-p4">P4</span></div>
+<ul>
+  <li>加依赖 <code>knife4j-spring-boot-starter</code>（3.0.3，配 Spring Boot 2.7）。</li>
+  <li>Controller 加 <code>@Api</code> / <code>@ApiOperation</code>，实体加 <code>@ApiModelProperty</code>。</li>
+  <li>这样启动日志里那句 <code>http://localhost:8080/doc.html</code> 才名副其实，<b>演示时直接打开给面试官看非常加分</b>。</li>
+</ul>
+</div>
+
+<div class="item">
+<div class="hd"><h4>7.2 参数校验与统一异常</h4><span class="tag t-p4">P4</span></div>
+<ul>
+  <li>入参 DTO 加 <code>@NotBlank</code> / <code>@NotNull</code> / <code>@Size</code>，Controller 加 <code>@Validated</code>。</li>
+  <li><code>GlobalExceptionHandler</code> 补 <code>MethodArgumentNotValidException</code> 分支，
+      把字段错误拼成中文提示返回，别让前端看到一坨英文堆栈。</li>
+</ul>
+</div>
+
+<div class="item">
+<div class="hd"><h4>7.3 测试与文档</h4><span class="tag t-p4">P4</span></div>
+<ul>
+  <li>补 <code>doc/测试记录.md</code>：每个模块至少 5 条用例（正常 / 边界 / 异常），
+      这条最容易被忽略，但恰恰是<b>你投测试岗最直接的证据</b>。</li>
+  <li>补 <code>doc/接口文档.md</code> 里本轮新增的 4 个接口（unreadCount / latest / quickFilter / postpone）。</li>
+  <li>README 补一张系统架构图 + 模块清单，让人 10 秒看懂项目。</li>
+</ul>
+</div>
+
+<div class="item">
+<div class="hd"><h4>7.4 简历上怎么描述这个项目</h4><span class="tag t-p4">P4</span></div>
+<ul>
+  <li><b>现在能写的</b>：多模块 Maven 项目、RESTful 接口设计、MyBatis 动态 SQL 与复杂报表查询、
+      Quartz 持久化任务调度、EasyExcel 导入导出、Vue2 + Element UI 前端。</li>
+  <li><b>做完 4.1 之后能加</b>：基于轮询/SSE 的实时消息未读推送。</li>
+  <li><b>做完第 3 节路线 A 之后能加</b>：RBAC 权限模型、动态路由、JWT 鉴权。</li>
+  <li><b>做完 6.1/6.7 之后能加</b>：AOP 操作审计、逻辑删除与数据合规。</li>
+  <li>提醒：GitHub 账号目前是负资产（2026-09-10 才注册、单 commit），
+      简历上<b>不要放仓库链接</b>，本地演示即可。</li>
+</ul>
+</div>
+
+<!-- ============ 8 ============ -->
+<h2 id="s8">8. 明天的执行顺序建议</h2>
+
+<table>
+<thead><tr><th style="width:90px">批次</th><th style="width:300px">做什么</th><th>为什么这个顺序</th></tr></thead>
+<tbody>
+<tr>
+  <td><b>批次 0</b><br><span class="meta">30 分钟</span></td>
+  <td>执行第 2 节的 4 项验证：<code>mvn clean install</code> → 按序跑 6 个 SQL → 启动 →
+      手动执行一次 job 100 → 点五处导出按钮。</td>
+  <td>先确认本轮修复真的落地了，别在坏地基上盖楼。</td>
+</tr>
+<tr>
+  <td><b>批次 1</b><br><span class="meta">半天</span></td>
+  <td>第 3 节 <b>路线 A</b>（最小登录体系）。</td>
+  <td>不解决这个，后面每一项都没法演示。若时间紧，先做路线 B 顶上，路线 A 排在最后。</td>
+</tr>
+<tr>
+  <td><b>批次 2</b><br><span class="meta">2~3 小时</span></td>
+  <td>4.2 随访"仅看逾期"筛选 → 4.1 站内信顶部小红点。</td>
+  <td>你点名的两项。先做 4.2 是因为它纯后端加参 + 前端 radio，风险低、见效快，能立刻建立手感。</td>
+</tr>
+<tr>
+  <td><b>批次 3</b><br><span class="meta">按需</span></td>
+  <td>5.1 看板 ECharts → 5.2 患者 360 档案 → 6.2 数据字典 → 7.1 Knife4j。</td>
+  <td>这几项都是"演示时最抓眼球"的，优先级高于底层能力。</td>
+</tr>
+<tr>
+  <td><b>批次 4</b><br><span class="meta">有余力</span></td>
+  <td>6.1 AOP 日志 / 5.3 出入库流水 / 6.4 Excel 导入 / 7.2 参数校验。</td>
+  <td>这些是"深度"，用来回答面试官追问。</td>
+</tr>
+</tbody>
+</table>
+
+<div class="note">
+<b>动手前记得先做一件事</b>：把当前代码 <code>git commit</code> 一次（工作区有 <code>.git</code>）。
+本轮改动涉及 <code>application.yml</code>、<code>quartz.sql</code>、<code>medical_menu.sql</code> 等关键文件，
+改坏了能一键回滚。
+</div>
+
+<div class="foot">若依医疗 · 完善清单 v1 · 2026-09-15 · 共 8 节 / 30 项</div>
+
+</div>
+</body>
+</html>

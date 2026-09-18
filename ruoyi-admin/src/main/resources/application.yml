@@ -9,15 +9,15 @@ server:
 spring:
   application:
     name: ruoyi-medical
-  # 数据源配置
+  # 数据源配置（druid-spring-boot-starter 只读 spring.datasource.druid.* 这一层）
   datasource:
-    type: com.alibaba.druid.pool.DruidDataSource
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/ruoyi_medical?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
-    username: root
-    password: root
-    # Druid 连接池配置
     druid:
+      # 连接信息必须下沉到 druid 层级，否则 DataSource 建出来没有 url
+      driver-class-name: com.mysql.cj.jdbc.Driver
+      url: jdbc:mysql://localhost:3306/ruoyi_medical?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+      username: root
+      password: "Aa*040908"
+      # Druid 连接池配置
       initial-size: 10
       min-idle: 10
       max-active: 200
@@ -31,12 +31,38 @@ spring:
       pool-prepared-statements: true
       max-pool-prepared-statement-per-connection-size: 20
 
+  # Redis 配置（若依标准集成；本机需启动 Redis 服务，否则涉及缓存的操作会报错，但应用启动不受影响）
+  redis:
+    # 数据库索引（默认为0）
+    database: 0
+    # 地址
+    host: localhost
+    # 端口
+    port: 6379
+    # 密码（无密码留空，生产建议设置）
+    password:
+    # 连接超时时间
+    timeout: 10s
+    lettuce:
+      pool:
+        # 连接池最大连接数
+        max-active: 200
+        # 连接池最大阻塞等待时间（负值表示无限制）
+        max-wait: -1ms
+        # 连接池中的最大空闲连接
+        max-idle: 10
+        # 连接池中的最小空闲连接
+        min-idle: 0
+
 # MyBatis 配置
 mybatis:
-  # 搜索指定包别名
-  type-aliases-package: com.ruoyi.system.domain
+  # 搜索指定包别名（必须包含 quartz / generator 的 domain 包，
+  # 否则 SysJobMapper.xml 中的 resultMap type="SysJob" 会因找不到别名导致启动失败）
+  type-aliases-package: com.ruoyi.system.domain,com.ruoyi.quartz.domain,com.ruoyi.generator.domain
   # 配置 mapper 的扫描路径
-  mapper-locations: classpath:mapper/*Mapper.xml
+  # 必须用 classpath*：fat jar 下各模块的 mapper XML 分散在多个 classpath 根，
+  # 只写 classpath: 会漏掉 ruoyi-quartz 等依赖 jar 里的 XML（报 Invalid bound statement）
+  mapper-locations: classpath*:mapper/**/*.xml
   # 配置全局配置
   configuration:
     # 开启驼峰命名自动映射
@@ -51,8 +77,25 @@ pagehelper:
   params: count=countSql
   reasonable: true
 
+# 代码生成配置
+gen:
+  author: ruoyi
+  packageName: com.ruoyi.system
+  autoRemovePre: false
+  tablePrefix: sys_
+
+# AI 微服务配置（Python FastAPI，ruoyi-ai/main.py）
+# 不配置也能启动 —— AiHttpUtil 中的 @Value 已内置同款默认值。
+# readTimeout 给足 130s：7B 大模型本地首次推理较慢，超时会导致请求被提前掐断。
+ai:
+  service:
+    url: http://127.0.0.1:8000
+    connectTimeout: 5000
+    readTimeout: 130000
+
 # 日志配置
 logging:
   level:
-    com.ruoyi: debug
+    # 默认 info，避免 debug 刷屏（原 debug 会打印大量 MyBatis/业务调试日志）
+    com.ruoyi: info
     org.springframework: warn

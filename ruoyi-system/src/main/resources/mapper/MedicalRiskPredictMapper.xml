@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalRiskPredictMapper">
+
+    <resultMap type="MedicalRiskPredict" id="MedicalRiskPredictResult">
+        <id     property="predictId"    column="predict_id"    />
+        <result property="patientId"    column="patient_id"    />
+        <result property="diseaseName"  column="disease_name"  />
+        <result property="featureJson"  column="feature_json"  />
+        <result property="riskProb"     column="risk_prob"     />
+        <result property="resultLabel"  column="result_label"  />
+        <result property="riskLevel"    column="risk_level"    />
+        <result property="advice"       column="advice"        />
+        <result property="threshold"    column="threshold"     />
+        <result property="modelMetrics" column="model_metrics" />
+        <result property="createBy"     column="create_by"     />
+        <result property="createTime"   column="create_time"   />
+    </resultMap>
+
+    <sql id="selectMedicalRiskPredictVo">
+        select predict_id, patient_id, disease_name, feature_json, risk_prob, result_label,
+               risk_level, advice, threshold, model_metrics, create_by, create_time
+        from medical_risk_predict
+    </sql>
+
+    <sql id="queryRiskPredictWhere">
+        <if test="patientId != null">
+            AND patient_id = #{patientId}
+        </if>
+        <if test="diseaseName != null and diseaseName != ''">
+            AND disease_name = #{diseaseName}
+        </if>
+        <if test="resultLabel != null and resultLabel != ''">
+            AND result_label = #{resultLabel}
+        </if>
+        <if test="riskLevel != null and riskLevel != ''">
+            AND risk_level = #{riskLevel}
+        </if>
+    </sql>
+
+    <select id="selectMedicalRiskPredictById" parameterType="Long" resultMap="MedicalRiskPredictResult">
+        <include refid="selectMedicalRiskPredictVo"/>
+        where predict_id = #{predictId}
+    </select>
+
+    <select id="selectMedicalRiskPredictList" parameterType="MedicalRiskPredict" resultMap="MedicalRiskPredictResult">
+        <include refid="selectMedicalRiskPredictVo"/>
+        <where>
+            <include refid="queryRiskPredictWhere"/>
+        </where>
+        order by predict_id desc
+    </select>
+
+    <insert id="insertMedicalRiskPredict" parameterType="MedicalRiskPredict" useGeneratedKeys="true" keyProperty="predictId">
+        insert into medical_risk_predict
+        (patient_id, disease_name, feature_json, risk_prob, result_label, risk_level,
+         advice, threshold, model_metrics, create_by, create_time)
+        values
+        (#{patientId}, #{diseaseName}, #{featureJson}, #{riskProb}, #{resultLabel}, #{riskLevel},
+         #{advice}, #{threshold}, #{modelMetrics}, #{createBy}, sysdate())
+    </insert>
+
+    <delete id="deleteMedicalRiskPredictById" parameterType="Long">
+        delete from medical_risk_predict where predict_id = #{predictId}
+    </delete>
+
+    <delete id="deleteMedicalRiskPredictByIds" parameterType="Long">
+        delete from medical_risk_predict where predict_id in
+        <foreach collection="array" item="predictId" open="(" separator="," close=")">
+            #{predictId}
+        </foreach>
+    </delete>
+
+</mapper>

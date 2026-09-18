@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalPriceItemMapper">
+
+    <resultMap type="MedicalPriceItem" id="MedicalPriceItemResult">
+        <result property="itemId"        column="item_id"        />
+        <result property="itemType"      column="item_type"      />
+        <result property="itemName"      column="item_name"      />
+        <result property="spec"          column="spec"           />
+        <result property="unit"          column="unit"           />
+        <result property="price"         column="price"          />
+        <result property="insuranceFlag" column="insurance_flag"  />
+        <result property="status"        column="status"         />
+    </resultMap>
+
+    <sql id="selectMedicalPriceItemVo">
+        select item_id, item_type, item_name, spec, unit, price, insurance_flag, status
+        from medical_price_item
+    </sql>
+
+    <select id="selectMedicalPriceItemById" parameterType="Long" resultMap="MedicalPriceItemResult">
+        <include refid="selectMedicalPriceItemVo"/>
+        where item_id = #{itemId}
+    </select>
+
+    <select id="selectMedicalPriceItemList" parameterType="MedicalPriceItem" resultMap="MedicalPriceItemResult">
+        <include refid="selectMedicalPriceItemVo"/>
+        <where>
+            <if test="itemType != null and itemType != ''">
+                AND item_type = #{itemType}
+            </if>
+            <if test="itemName != null and itemName != ''">
+                AND item_name like concat('%', #{itemName}, '%')
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+        order by item_type, item_id
+    </select>
+
+    <insert id="insertMedicalPriceItem" parameterType="MedicalPriceItem" useGeneratedKeys="true" keyProperty="itemId">
+        insert into medical_price_item
+        (item_type, item_name, spec, unit, price, insurance_flag, status)
+        values
+        (#{itemType}, #{itemName}, #{spec}, #{unit}, #{price}, #{insuranceFlag}, #{status})
+    </insert>
+
+    <update id="updateMedicalPriceItem" parameterType="MedicalPriceItem">
+        update medical_price_item
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="itemType != null and itemType != ''">item_type = #{itemType},</if>
+            <if test="itemName != null and itemName != ''">item_name = #{itemName},</if>
+            <if test="spec != null">spec = #{spec},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="insuranceFlag != null and insuranceFlag != ''">insurance_flag = #{insuranceFlag},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+        </trim>
+        where item_id = #{itemId}
+    </update>
+
+    <delete id="deleteMedicalPriceItemById" parameterType="Long">
+        delete from medical_price_item where item_id = #{itemId}
+    </delete>
+
+    <delete id="deleteMedicalPriceItemByIds" parameterType="Long">
+        delete from medical_price_item where item_id in
+        <foreach collection="array" item="itemId" open="(" separator="," close=")">
+            #{itemId}
+        </foreach>
+    </delete>
+
+    <select id="selectPriceByDrugName" parameterType="String" resultMap="MedicalPriceItemResult">
+        select item_id, item_type, item_name, spec, unit, price, insurance_flag, status
+        from medical_price_item
+        where item_type = '药品' and item_name = #{drugName} and status = '0'
+        limit 1
+    </select>
+
+</mapper>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalAiRecordMapper">
+
+    <resultMap type="MedicalAiRecord" id="MedicalAiRecordResult">
+        <id     property="recordId"       column="record_id"       />
+        <result property="patientId"      column="patient_id"      />
+        <result property="patientName"    column="patient_name"    />
+        <result property="age"            column="age"             />
+        <result property="gender"         column="gender"          />
+        <result property="chiefComplaint" column="chief_complaint" />
+        <result property="aiContent"      column="ai_content"      />
+        <result property="doctorContent"  column="doctor_content"  />
+        <result property="engine"         column="engine"          />
+        <result property="modelName"      column="model_name"      />
+        <result property="degraded"       column="degraded"        />
+        <result property="elapsedMs"      column="elapsed_ms"      />
+        <result property="status"         column="status"          />
+        <result property="diagnosisId"    column="diagnosis_id"    />
+        <result property="createBy"       column="create_by"       />
+        <result property="createTime"     column="create_time"     />
+        <result property="remark"         column="remark"          />
+    </resultMap>
+
+    <sql id="selectMedicalAiRecordVo">
+        select record_id, patient_id, patient_name, age, gender, chief_complaint,
+               ai_content, doctor_content, engine, model_name, degraded, elapsed_ms,
+               status, diagnosis_id, create_by, create_time, remark
+        from medical_ai_record
+    </sql>
+
+    <sql id="queryAiRecordWhere">
+        <if test="patientId != null">
+            AND patient_id = #{patientId}
+        </if>
+        <if test="patientName != null and patientName != ''">
+            AND patient_name like concat('%', #{patientName}, '%')
+        </if>
+        <if test="status != null and status != ''">
+            AND status = #{status}
+        </if>
+        <if test="engine != null and engine != ''">
+            AND engine = #{engine}
+        </if>
+    </sql>
+
+    <select id="selectMedicalAiRecordById" parameterType="Long" resultMap="MedicalAiRecordResult">
+        <include refid="selectMedicalAiRecordVo"/>
+        where record_id = #{recordId}
+    </select>
+
+    <select id="selectMedicalAiRecordList" parameterType="MedicalAiRecord" resultMap="MedicalAiRecordResult">
+        <include refid="selectMedicalAiRecordVo"/>
+        <where>
+            <include refid="queryAiRecordWhere"/>
+        </where>
+        order by record_id desc
+    </select>
+
+    <insert id="insertMedicalAiRecord" parameterType="MedicalAiRecord" useGeneratedKeys="true" keyProperty="recordId">
+        insert into medical_ai_record
+        (patient_id, patient_name, age, gender, chief_complaint, ai_content, doctor_content,
+         engine, model_name, degraded, elapsed_ms, status, diagnosis_id, create_by, create_time, remark)
+        values
+        (#{patientId}, #{patientName}, #{age}, #{gender}, #{chiefComplaint}, #{aiContent}, #{doctorContent},
+         #{engine}, #{modelName}, #{degraded}, #{elapsedMs}, #{status}, #{diagnosisId}, #{createBy}, sysdate(), #{remark})
+    </insert>
+
+    <update id="updateMedicalAiRecord" parameterType="MedicalAiRecord">
+        update medical_ai_record
+        <set>
+            <if test="patientId != null">patient_id = #{patientId},</if>
+            <if test="patientName != null">patient_name = #{patientName},</if>
+            <if test="doctorContent != null">doctor_content = #{doctorContent},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="diagnosisId != null">diagnosis_id = #{diagnosisId},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where record_id = #{recordId}
+    </update>
+
+    <delete id="deleteMedicalAiRecordById" parameterType="Long">
+        delete from medical_ai_record where record_id = #{recordId}
+    </delete>
+
+    <delete id="deleteMedicalAiRecordByIds" parameterType="Long">
+        delete from medical_ai_record where record_id in
+        <foreach collection="array" item="recordId" open="(" separator="," close=")">
+            #{recordId}
+        </foreach>
+    </delete>
+
+</mapper>

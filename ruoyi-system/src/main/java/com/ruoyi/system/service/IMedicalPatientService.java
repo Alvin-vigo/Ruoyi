@@ -50,4 +50,12 @@ public interface IMedicalPatientService {
      * @return 结果
      */
     public int deleteMedicalPatientByIds(Long[] patientIds);
+
+    /**
+     * 身份证号唯一性校验
+     *
+     * @param medicalPatient 含 idCard 与 patientId
+     * @return "0" 表示唯一可用，"1" 表示已存在重复
+     */
+    public String checkIdCardUnique(MedicalPatient medicalPatient);
 }

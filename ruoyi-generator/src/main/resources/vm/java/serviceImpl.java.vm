@@ -1,0 +1,76 @@
+package ${packageName}.service.impl;
+
+import ${packageName}.domain.${ClassName};
+import ${packageName}.mapper.${ClassName}Mapper;
+import ${packageName}.service.I${ClassName}Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+/**
+ * ${functionName}Service业务层处理
+ *
+ * @author ${author}
+ */
+@Service
+public class ${ClassName}ServiceImpl implements I${ClassName}Service {
+
+    @Autowired
+    private ${ClassName}Mapper ${className}Mapper;
+
+    /**
+     * 查询${functionName}
+     *
+     * @param ${pkColumn.javaField} ${pkColumn.columnComment}
+     * @return ${functionName}
+     */
+    @Override
+    public ${ClassName} select${ClassName}ById(${pkColumn.javaType} ${pkColumn.javaField}) {
+        return ${className}Mapper.select${ClassName}ById(${pkColumn.javaField});
+    }
+
+    /**
+     * 查询${functionName}列表
+     *
+     * @param ${className} ${functionName}
+     * @return ${functionName}
+     */
+    @Override
+    public List<${ClassName}> select${ClassName}List(${ClassName} ${className}) {
+        return ${className}Mapper.select${ClassName}List(${className});
+    }
+
+    /**
+     * 新增${functionName}
+     *
+     * @param ${className} ${functionName}
+     * @return 结果
+     */
+    @Override
+    public int insert${ClassName}(${ClassName} ${className}) {
+        return ${className}Mapper.insert${ClassName}(${className});
+    }
+
+    /**
+     * 修改${functionName}
+     *
+     * @param ${className} ${functionName}
+     * @return 结果
+     */
+    @Override
+    public int update${ClassName}(${ClassName} ${className}) {
+        return ${className}Mapper.update${ClassName}(${className});
+    }
+
+    /**
+     * 批量删除${functionName}
+     *
+     * @param ${pkColumn.javaField}s 需要删除的${pkColumn.columnComment}
+     * @return 结果
+     */
+    @Override
+    public int delete${ClassName}ByIds(${pkColumn.javaType}[] ${pkColumn.javaField}s) {
+        return ${className}Mapper.delete${ClassName}ByIds(${pkColumn.javaField}s);
+    }
+}

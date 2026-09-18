@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalRagKnowledgeMapper">
+
+    <resultMap type="MedicalRagKnowledge" id="MedicalRagKnowledgeResult">
+        <id     property="knowledgeId" column="knowledge_id" />
+        <result property="title"       column="title"        />
+        <result property="content"     column="content"      />
+        <result property="category"    column="category"     />
+        <result property="synced"      column="synced"       />
+        <result property="createBy"    column="create_by"    />
+        <result property="createTime"  column="create_time"  />
+        <result property="remark"      column="remark"       />
+    </resultMap>
+
+    <sql id="selectMedicalRagKnowledgeVo">
+        select knowledge_id, title, content, category, synced, create_by, create_time, remark
+        from medical_rag_knowledge
+    </sql>
+
+    <sql id="queryRagKnowledgeWhere">
+        <if test="title != null and title != ''">
+            AND title like concat('%', #{title}, '%')
+        </if>
+        <if test="content != null and content != ''">
+            AND content like concat('%', #{content}, '%')
+        </if>
+        <if test="category != null and category != ''">
+            AND category = #{category}
+        </if>
+        <if test="synced != null and synced != ''">
+            AND synced = #{synced}
+        </if>
+    </sql>
+
+    <select id="selectMedicalRagKnowledgeById" parameterType="Long" resultMap="MedicalRagKnowledgeResult">
+        <include refid="selectMedicalRagKnowledgeVo"/>
+        where knowledge_id = #{knowledgeId}
+    </select>
+
+    <select id="selectMedicalRagKnowledgeList" parameterType="MedicalRagKnowledge" resultMap="MedicalRagKnowledgeResult">
+        <include refid="selectMedicalRagKnowledgeVo"/>
+        <where>
+            <include refid="queryRagKnowledgeWhere"/>
+        </where>
+        order by knowledge_id desc
+    </select>
+
+    <!-- 尚未同步进 Chroma 向量库的条目 -->
+    <select id="selectUnsyncedKnowledge" resultMap="MedicalRagKnowledgeResult">
+        <include refid="selectMedicalRagKnowledgeVo"/>
+        where synced = '0' or synced is null
+        order by knowledge_id asc
+    </select>
+
+    <insert id="insertMedicalRagKnowledge" parameterType="MedicalRagKnowledge" useGeneratedKeys="true" keyProperty="knowledgeId">
+        insert into medical_rag_knowledge
+        (title, content, category, synced, create_by, create_time, remark)
+        values
+        (#{title}, #{content}, #{category}, #{synced}, #{createBy}, sysdate(), #{remark})
+    </insert>
+
+    <update id="updateMedicalRagKnowledge" parameterType="MedicalRagKnowledge">
+        update medical_rag_knowledge
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="category != null">category = #{category},</if>
+            <if test="synced != null and synced != ''">synced = #{synced},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        where knowledge_id = #{knowledgeId}
+    </update>
+
+    <update id="markSynced" parameterType="Long">
+        update medical_rag_knowledge set synced = '1' where knowledge_id in
+        <foreach collection="array" item="knowledgeId" open="(" separator="," close=")">
+            #{knowledgeId}
+        </foreach>
+    </update>
+
+    <delete id="deleteMedicalRagKnowledgeById" parameterType="Long">
+        delete from medical_rag_knowledge where knowledge_id = #{knowledgeId}
+    </delete>
+
+    <delete id="deleteMedicalRagKnowledgeByIds" parameterType="Long">
+        delete from medical_rag_knowledge where knowledge_id in
+        <foreach collection="array" item="knowledgeId" open="(" separator="," close=")">
+            #{knowledgeId}
+        </foreach>
+    </delete>
+
+</mapper>
