@@ -151,13 +151,17 @@
 <script>
 import { riskFeatures, riskPredict, listRiskPredict, delRiskPredict, unwrapAi } from '@/api/medical/ai'
 
-// 与 train_risk.py 保持一致的特征中文说明（键名来自后端 featureNames）
+// 与 models/risk_features.json（模型训练真实特征，Pima 糖尿病数据集）保持一致，
+// 键名必须与后端 RISK_FEATURE_NAMES 一一对应。
 const FEATURE_META = {
-  age: { label: '年龄', unit: '岁', placeholder: '如 45', precision: 0 },
-  bp_high: { label: '收缩压(高压)', unit: 'mmHg', placeholder: '如 130', precision: 0 },
-  bp_low: { label: '舒张压(低压)', unit: 'mmHg', placeholder: '如 85', precision: 0 },
-  bmi: { label: 'BMI 体质指数', unit: '', placeholder: '如 26.5', precision: 1 },
-  glucose: { label: '血糖', unit: 'mmol/L', placeholder: '如 6.8', precision: 1 }
+  Pregnancies: { label: '怀孕次数', unit: '次', placeholder: '如 0', precision: 0 },
+  Glucose: { label: '血糖', unit: 'mmol/L', placeholder: '如 6.8', precision: 1 },
+  BloodPressure: { label: '舒张压', unit: 'mmHg', placeholder: '如 72', precision: 0 },
+  SkinThickness: { label: '皮褶厚度', unit: 'mm', placeholder: '如 20', precision: 0 },
+  Insulin: { label: '胰岛素', unit: 'mu U/ml', placeholder: '如 80', precision: 0 },
+  BMI: { label: 'BMI 体质指数', unit: '', placeholder: '如 26.5', precision: 1 },
+  DiabetesPedigreeFunction: { label: '糖尿病家族史指数', unit: '', placeholder: '如 0.5', precision: 2 },
+  Age: { label: '年龄', unit: '岁', placeholder: '如 45', precision: 0 }
 }
 
 export default {

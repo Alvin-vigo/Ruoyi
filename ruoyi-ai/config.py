@@ -65,7 +65,9 @@ CHEST_MODEL_PATH = Path(os.getenv("CHEST_MODEL_PATH", str(MODEL_DIR / "chest_cnn
 
 # ---------------- 模块② 风险预测 ----------------
 # 【必须与 train_risk.py 中的特征顺序严格一致】，否则推理结果无意义
-RISK_FEATURE_NAMES = ["age", "bp_high", "bp_low", "bmi", "glucose"]
+# 必须与 models/risk_features.json（模型训练时的真实特征顺序）严格一致，
+# 否则推理端收到的特征数量/顺序与模型不匹配会直接 500。此前曾误写成 5 个简化特征。
+RISK_FEATURE_NAMES = ["Pregnancies", "Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"]
 RISK_THRESHOLD = float(os.getenv("RISK_THRESHOLD", "0.5"))
 
 # ---------------- 模块③ 胸片 ----------------

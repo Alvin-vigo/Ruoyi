@@ -17,7 +17,7 @@ public class RuoYiMedicalApplication {
         SpringApplication.run(RuoYiMedicalApplication.class, args);
         System.out.println("============================================");
         System.out.println("  若依医疗管理系统启动成功！");
-        System.out.println("  接口文档: http://localhost:8080/doc.html");
+        System.out.println("  AI 模块: http://localhost:8000/docs");
         System.out.println("============================================");
     }
 }
