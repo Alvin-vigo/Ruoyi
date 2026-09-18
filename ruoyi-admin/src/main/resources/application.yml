@@ -95,6 +95,9 @@ ai:
 
 # 日志配置
 logging:
+  # 日志落盘：写入 logs/ 目录（Spring Boot 默认按大小+时间滚动），关窗口也不丢
+  file:
+    name: logs/ruoyi-medical.log
   level:
     # 默认 info，避免 debug 刷屏（原 debug 会打印大量 MyBatis/业务调试日志）
     com.ruoyi: info
