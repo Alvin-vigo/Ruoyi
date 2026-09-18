@@ -121,7 +121,7 @@ def main():
     print(f"[设备] {device}" + (f" ({torch.cuda.get_device_name(0)})" if device.type == "cuda" else ""))
 
     train_loader, val_loader, classes = build_loaders(data_root, args.batch_size, args.img_size)
-    print(f"[数据] 类别：{classes}（类别索引需与线上 ABNORMAL=1 / NORMAL=0 对齐）")
+    print(f"[数据] 类别：{classes}（类别顺序已随模型保存至 models/chest_classes.json，后端推理自动对齐）")
     print(f"[数据] 训练 {len(train_loader.dataset)} 张，验证 {len(val_loader.dataset)} 张")
 
     model = models.resnet18(num_classes=len(classes)).to(device)
@@ -151,6 +151,12 @@ def main():
 
     model_dir = BASE_DIR / "models"
     model_dir.mkdir(exist_ok=True)
+    # 保存类别顺序，供后端 chest.py 加载时对齐，避免硬编码顺序错位导致推理标签错乱
+    import json as _json
+
+    _cls_path = model_dir / "chest_classes.json"
+    with open(_cls_path, "w", encoding="utf-8") as _f:
+        _json.dump(classes, _f, ensure_ascii=False, indent=2)
     save_path = model_dir / "chest_cnn.pth"
     torch.save(model.state_dict(), save_path)
     print(f"\n[完成] 权重已保存：{save_path}")

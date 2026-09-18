@@ -71,7 +71,7 @@ RISK_FEATURE_NAMES = ["Pregnancies", "Glucose", "BloodPressure", "SkinThickness"
 RISK_THRESHOLD = float(os.getenv("RISK_THRESHOLD", "0.5"))
 
 # ---------------- 模块③ 胸片 ----------------
-CHEST_CLASSES = ["正常", "异常"]
+CHEST_CLASSES = ["COVID-19", "NORMAL", "Viral Pneumonia"]  # 顺序须与训练时 ImageFolder 字母序一致；chest.py 优先读生成的 chest_classes.json
 CHEST_THRESHOLD = float(os.getenv("CHEST_THRESHOLD", "0.5"))
 CHEST_IMG_SIZE = int(os.getenv("CHEST_IMG_SIZE", "224"))
 

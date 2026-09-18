@@ -15,9 +15,21 @@ ruoyi-ai / 模块③ 胸片智能初筛（ResNet18 二分类）
 3. 输出双类概率而非单一置信度，便于前端画"正常/异常"对比条；
 4. 明确声明这是**辅助筛查**工具，结论不构成诊断依据。
 """
-from typing import Dict
+import json
+from pathlib import Path
+from typing import Dict, List
 
 from config import CHEST_CLASSES, CHEST_IMG_SIZE, CHEST_MODEL_PATH, CHEST_THRESHOLD
+
+# 训练时生成的类别顺序优先（chest_classes.json），避免硬编码顺序与训练端错位导致标签错乱
+_CLASSES_JSON = Path(CHEST_MODEL_PATH).parent / "chest_classes.json"
+CLASSES: List[str] = list(CHEST_CLASSES)
+if _CLASSES_JSON.exists():
+    try:
+        with open(_CLASSES_JSON, encoding="utf-8") as _f:
+            CLASSES = json.load(_f)
+    except Exception:
+        pass
 
 
 class ModelNotReady(Exception):
@@ -52,7 +64,7 @@ def _get_model():
 
     _device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     try:
-        model = models.resnet18(num_classes=len(CHEST_CLASSES))
+        model = models.resnet18(num_classes=len(CLASSES))
         state = torch.load(CHEST_MODEL_PATH, map_location=_device)
         model.load_state_dict(state)
         model.to(_device)
@@ -68,7 +80,7 @@ def status() -> Dict[str, object]:
     return {
         "ready": CHEST_MODEL_PATH.exists(),
         "model_path": str(CHEST_MODEL_PATH),
-        "classes": CHEST_CLASSES,
+        "classes": list(CLASSES),
         "hint": "" if CHEST_MODEL_PATH.exists() else "请先运行 scripts/train_chest.py",
     }
 
@@ -76,34 +88,36 @@ def status() -> Dict[str, object]:
 def predict(image) -> Dict[str, object]:
     """
     image: PIL.Image.Image（RGB）
-    返回双类概率与判定结果
+    返回三分类概率与判定结果（类别顺序与训练端 chest_classes.json 严格一致）
     """
     model, device = _get_model()
     import torch
     from torchvision import transforms
 
+    # 必须与 train_chest.py 的 val_tf 完全一致（含 ImageNet 归一化），否则推理分布与训练错位、概率偏移
     transform = transforms.Compose(
         [
             transforms.Resize((CHEST_IMG_SIZE, CHEST_IMG_SIZE)),
             transforms.ToTensor(),
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
         ]
     )
     tensor = transform(image.convert("RGB")).unsqueeze(0).to(device)
     with torch.no_grad():
         logits = model(tensor)
-        probs = torch.softmax(logits, dim=1)[0]
+        probs = torch.softmax(logits, dim=1)[0].cpu().tolist()
 
-    prob_normal = float(probs[0])
-    prob_abnormal = float(probs[1])
-    abnormal = prob_abnormal >= CHEST_THRESHOLD
+    # 与 CLASSES（优先取训练端 chest_classes.json）顺序严格对齐
+    probs_dict = {name: round(float(p), 4) for name, p in zip(CLASSES, probs)}
+    top_idx = int(max(range(len(probs)), key=lambda i: probs[i]))
+    top_class = CLASSES[top_idx]
+    confidence = round(float(probs[top_idx]), 4)
 
     return {
-        "result": CHEST_CLASSES[1] if abnormal else CHEST_CLASSES[0],
-        "result_label": "abnormal" if abnormal else "normal",
-        "confidence": round(prob_abnormal if abnormal else prob_normal, 4),
-        "prob_normal": round(prob_normal, 4),
-        "prob_abnormal": round(prob_abnormal, 4),
-        "threshold": CHEST_THRESHOLD,
+        "result": top_class,
+        "confidence": confidence,
+        "probs": probs_dict,
+        "classes": list(CLASSES),
         "device": str(device),
         "disclaimer": "本结果为AI辅助筛查，不能替代放射科医师诊断。",
     }

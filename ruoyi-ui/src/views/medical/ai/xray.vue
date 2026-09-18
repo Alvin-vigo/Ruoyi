@@ -56,25 +56,16 @@
             </el-col>
             <el-col :span="14">
               <el-result
-                :icon="result.result_label === '1' ? 'warning' : 'success'"
+                :icon="result.result === 'NORMAL' ? 'success' : 'warning'"
                 :title="result.result"
-                :sub-title="'AI 判定：' + (result.result_label === '1' ? '疑似存在病灶，建议进一步检查' : '未见明显异常')"
+                :sub-title="'AI 判定：' + (result.result || '') + '（置信度 ' + ((result.confidence || 0) * 100).toFixed(1) + '%）'"
               />
               <div class="prob-block">
-                <div class="prob-row">
-                  <span class="plabel">异常概率</span>
+                <div class="prob-row" v-for="(p, name) in (result.probs || {})" :key="name">
+                  <span class="plabel">{{ name }}</span>
                   <el-progress
-                    :percentage="Math.round((result.prob_abnormal || 0) * 100)"
-                    color="#F56C6C"
-                    :stroke-width="16"
-                    style="flex: 1"
-                  />
-                </div>
-                <div class="prob-row">
-                  <span class="plabel">正常概率</span>
-                  <el-progress
-                    :percentage="Math.round((result.prob_normal || 0) * 100)"
-                    color="#67C23A"
+                    :percentage="Math.round((p || 0) * 100)"
+                    :color="name === 'NORMAL' ? '#67C23A' : '#F56C6C'"
                     :stroke-width="16"
                     style="flex: 1"
                   />
