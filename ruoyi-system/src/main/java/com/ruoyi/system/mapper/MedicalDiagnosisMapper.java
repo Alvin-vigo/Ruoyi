@@ -29,6 +29,24 @@ public interface MedicalDiagnosisMapper {
     public List<MedicalDiagnosis> selectMedicalDiagnosisList(MedicalDiagnosis medicalDiagnosis);
 
     /**
+     * 查询下一个可用的诊疗ID（当前最大ID+1，删除后ID可复用）
+     *
+     * @return 下一个诊疗ID
+     */
+    public Long selectNextDiagnosisId();
+
+    /**
+     * 当前读（SELECT ... FOR UPDATE）取当前最大诊疗ID
+     *
+     * <p>与 selectNextDiagnosisId 的区别：本方法加锁并直读最新已提交版本，
+     * 不走 MVCC 快照，用于在事务内配合行锁做原子 ID 分配（AC-08）。
+     * 空表时返回 null，由调用方按 0 处理。
+     *
+     * @return 当前最大诊疗ID，表为空时返回 null
+     */
+    public Long selectMaxIdForUpdate();
+
+    /**
      * 新增诊疗信息
      *
      * @param medicalDiagnosis 诊疗信息

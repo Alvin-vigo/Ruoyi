@@ -267,4 +267,44 @@ public class RedisCache
             return result;
         }, new HashSet<>());
     }
+
+    /** ============================== 分布式锁 ============================== */
+
+    /**
+     * 抢占分布式锁（SET key value NX EX），仅在 key 不存在时写入成功。
+     *
+     * <p><b>降级语义与缓存类操作相反，务必注意</b>：
+     * 缓存读不到时返回兜底值是安全的（数据仍在库里）；但锁操作若把「Redis 不可用」
+     * 当成「抢锁失败」返回 false，会导致 Redis 一挂业务就被完全阻断。
+     * 因此这里 Redis 异常时返回 <b>true（放行）</b>，把可用性放在防重之前——
+     * 防重的最后一道防线仍是数据库的原子库存扣减与发药记录的幂等判断。
+     *
+     * @param key     锁键
+     * @param value   锁值（建议带上请求标识，便于排查）
+     * @param timeout 自动释放时间
+     * @param unit    时间单位
+     * @return true 表示抢到锁（或 Redis 不可用已降级放行）；false 表示锁已被他人持有
+     */
+    public boolean tryLock(String key, String value, long timeout, TimeUnit unit)
+    {
+        try
+        {
+            Boolean ok = redisTemplate.opsForValue().setIfAbsent(key, value, timeout, unit);
+            // Redis 正常响应但返回 null 属异常边界，按「放行」处理，避免误伤业务
+            return ok == null || ok;
+        }
+        catch (Exception e)
+        {
+            degrade(e);
+            return true;
+        }
+    }
+
+    /**
+     * 释放分布式锁。仅在需要提前释放时调用；不调用也会按 TTL 自动过期。
+     */
+    public void unlock(String key)
+    {
+        safeRun(() -> redisTemplate.delete(key));
+    }
 }

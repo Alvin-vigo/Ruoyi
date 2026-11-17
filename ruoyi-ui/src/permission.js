@@ -19,10 +19,15 @@ router.beforeEach((to, from, next) => {
             next({ ...to, replace: true })
           })
           .catch(() => {
-            // 获取信息失败（token 失效等）：清除本地状态。
-            // 401 的整页跳转由 request.js 统一处理（location.href='/login'），此处不必再 next。
+            // 获取信息失败（token 失效等）：清除本地状态并显式放行到登录页。
+            //
+            // 这里必须调用 next()，否则路由跳转会永远停在 pending 状态，
+            // 用户表现为「点了没反应」。
+            // 不依赖 request.js 的 401 整页跳转兜底：那条链路只覆盖「接口请求被拦截」，
+            // 覆盖不到 GetInfo 自身失败的情况。
             removeToken()
             store.commit('RESET')
+            next({ path: '/login', query: { redirect: to.fullPath }, replace: true })
           })
       } else {
         next()

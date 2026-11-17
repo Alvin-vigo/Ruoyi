@@ -1,0 +1,128 @@
+# ============================================================
+# 若依医疗 · 容器化编排（docker compose）
+#
+# 用法：
+#   docker compose up -d --build        # 首次构建并拉起整套环境
+#   docker compose logs -f backend      # 跟踪后端日志
+#   docker compose down                 # 停止并移除容器（数据卷保留）
+#   docker compose down -v              # 同时删除 mysql/redis 数据卷（慎用，会清空库）
+#
+# 数据流：
+#   浏览器 → frontend(nginx :8081) → backend(:8080) → mysql(:3306) / redis(:6379) / ai(:8000)
+# 默认账号：admin / admin123（未启用验证码）
+# ============================================================
+
+services:
+  # ---------------- 数据库 ----------------
+  mysql:
+    image: mysql:8.0
+    container_name: ruoyi-medical-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-changeme_local_only}
+      MYSQL_DATABASE: ruoyi_medical
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_0900_ai_ci
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./sql:/sql:ro
+      - ./docker/mysql/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks: [medical-net]
+
+  # ---------------- 缓存（令牌） ----------------
+  redis:
+    image: redis:7-alpine
+    container_name: ruoyi-medical-redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [medical-net]
+
+  # ---------------- 后端 ----------------
+  backend:
+    build:
+      context: .
+      dockerfile: ruoyi-admin/Dockerfile
+    container_name: ruoyi-medical-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-changeme_local_only}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      AI_SERVICE_URL: http://ai:8000
+      TZ: Asia/Shanghai
+    expose:
+      - "8080"
+    # TCP 端口探测：Spring Boot 完全刷新上下文后才监听 8080，命中即代表就绪（无需 curl/鉴权）
+    healthcheck:
+      test: ["CMD", "bash", "-c", "cat < /dev/null > /dev/tcp/127.0.0.1/8080"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks: [medical-net]
+
+  # ---------------- 前端 ----------------
+  frontend:
+    build:
+      context: ./ruoyi-ui
+      dockerfile: Dockerfile
+    container_name: ruoyi-medical-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8081:80"
+    networks: [medical-net]
+
+  # ---------------- AI 微服务 ----------------
+  # 模型权重(models/)与向量库(data/)通过卷挂载复用宿主机已训练产物，不打包进镜像。
+  # Ollama 跑在宿主机（host.docker.internal:11434）；若未启动，模块①/④自动降级。
+  ai:
+    build:
+      context: ./ruoyi-ai
+      dockerfile: Dockerfile
+    container_name: ruoyi-medical-ai
+    restart: unless-stopped
+    environment:
+      AI_HOST: "0.0.0.0"
+      AI_PORT: "8000"
+      OLLAMA_BASE: http://host.docker.internal:11434
+      HF_ENDPOINT: https://hf-mirror.com
+      TZ: Asia/Shanghai
+    volumes:
+      - ./ruoyi-ai/models:/app/models
+      - ./ruoyi-ai/data:/app/data
+    expose:
+      - "8000"
+    networks: [medical-net]
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  medical-net:
+    driver: bridge

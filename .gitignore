@@ -28,6 +28,10 @@ ruoyi-ui/node_modules/
 *.tmp
 *.cache
 
+# 临时检查输出（脚本跑出的中间产物，不应入库）
+sql_check.txt
+yml_check.txt
+
 # 系统文件
 .DS_Store
 Thumbs.db

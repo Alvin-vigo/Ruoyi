@@ -163,6 +163,7 @@ export default {
       this.reset()
     },
     submitForm() {
+      if (!this.$refs.form) return
       this.$refs.form.validate(valid => {
         if (!valid) return
         const op = this.form.itemId ? updatePrice(this.form) : addPrice(this.form)

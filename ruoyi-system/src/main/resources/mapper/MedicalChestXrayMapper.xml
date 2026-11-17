@@ -9,10 +9,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         <result property="patientId"     column="patient_id"     />
         <result property="imgUrl"        column="img_url"        />
         <result property="predictResult" column="predict_result" />
-        <result property="resultLabel"   column="result_label"   />
         <result property="confidence"    column="confidence"     />
-        <result property="probNormal"    column="prob_normal"    />
-        <result property="probAbnormal"  column="prob_abnormal"  />
+        <result property="probsJson"     column="probs_json"     />
         <result property="device"        column="device"         />
         <result property="elapsedMs"     column="elapsed_ms"     />
         <result property="createBy"      column="create_by"      />
@@ -20,17 +18,14 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     </resultMap>
 
     <sql id="selectMedicalChestXrayVo">
-        select xray_id, patient_id, img_url, predict_result, result_label, confidence,
-               prob_normal, prob_abnormal, device, elapsed_ms, create_by, create_time
+        select xray_id, patient_id, img_url, predict_result, confidence,
+               probs_json, device, elapsed_ms, create_by, create_time
         from medical_chest_xray
     </sql>
 
     <sql id="queryChestXrayWhere">
         <if test="patientId != null">
             AND patient_id = #{patientId}
-        </if>
-        <if test="resultLabel != null and resultLabel != ''">
-            AND result_label = #{resultLabel}
         </if>
     </sql>
 
@@ -57,11 +52,11 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
 
     <insert id="insertMedicalChestXray" parameterType="MedicalChestXray" useGeneratedKeys="true" keyProperty="xrayId">
         insert into medical_chest_xray
-        (patient_id, img_url, predict_result, result_label, confidence, prob_normal,
-         prob_abnormal, device, elapsed_ms, create_by, create_time)
+        (patient_id, img_url, predict_result, confidence, probs_json,
+         device, elapsed_ms, create_by, create_time)
         values
-        (#{patientId}, #{imgUrl}, #{predictResult}, #{resultLabel}, #{confidence}, #{probNormal},
-         #{probAbnormal}, #{device}, #{elapsedMs}, #{createBy}, sysdate())
+        (#{patientId}, #{imgUrl}, #{predictResult}, #{confidence}, #{probsJson},
+         #{device}, #{elapsedMs}, #{createBy}, sysdate())
     </insert>
 
     <delete id="deleteMedicalChestXrayById" parameterType="Long">

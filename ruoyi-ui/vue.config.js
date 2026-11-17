@@ -21,6 +21,10 @@ module.exports = {
       errors: true
     },
     proxy: {
+      // 登录鉴权三件套（/login /logout /getInfo 无业务前缀，必须单独转发，否则 404）
+      '/login': { target: 'http://localhost:8080', changeOrigin: true },
+      '/logout': { target: 'http://localhost:8080', changeOrigin: true },
+      '/getInfo': { target: 'http://localhost:8080', changeOrigin: true },
       // 后端若依服务（默认 8080），前端请求按路径前缀转发
       '/medical': { target: 'http://localhost:8080', changeOrigin: true },
       '/monitor': { target: 'http://localhost:8080', changeOrigin: true },

@@ -23,9 +23,8 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         (#{module}, #{action}, #{bizId}, #{bizNo}, #{operator}, #{detail}, #{createBy}, sysdate())
     </insert>
 
-    <select id="selectMedicalAuditLogList" parameterType="MedicalAuditLog" resultMap="MedicalAuditLogResult">
-        select log_id, module, action, biz_id, biz_no, operator, detail, create_by, create_time
-        from medical_audit_log
+    <!-- 查询条件片段：列表与计数共用，避免两处条件漂移 -->
+    <sql id="queryAuditLogWhere">
         <where>
             <if test="module != null and module != ''">AND module = #{module}</if>
             <if test="action != null and action != ''">AND action = #{action}</if>
@@ -34,7 +33,22 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             <if test="beginTime != null and beginTime != ''">AND create_time &gt;= #{beginTime}</if>
             <if test="endTime != null and endTime != ''">AND create_time &lt;= #{endTime}</if>
         </where>
+    </sql>
+
+    <select id="selectMedicalAuditLogList" parameterType="MedicalAuditLog" resultMap="MedicalAuditLogResult">
+        select log_id, module, action, biz_id, biz_no, operator, detail, create_by, create_time
+        from medical_audit_log
+        <include refid="queryAuditLogWhere"/>
         order by log_id desc
+    </select>
+
+    <!--
+      专用计数查询：审计表年增约 40 万行，绝不可用「查全表再取 size」的方式统计。
+      与列表共用同一套查询条件片段。
+    -->
+    <select id="selectMedicalAuditLogCount" parameterType="MedicalAuditLog" resultType="Long">
+        select count(1) from medical_audit_log
+        <include refid="queryAuditLogWhere"/>
     </select>
 
 </mapper>

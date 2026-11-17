@@ -18,6 +18,17 @@ export const constantRoutes = [
     hidden: true
   },
   {
+    path: '/redirect',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: '/redirect/:path(.*)',
+        component: () => import('@/views/redirect/index')
+      }
+    ]
+  },
+  {
     path: '/',
     component: Layout,
     redirect: '/index',

@@ -56,9 +56,9 @@
             </el-col>
             <el-col :span="14">
               <el-result
-                :icon="result.result === 'NORMAL' ? 'success' : 'warning'"
+                :icon="resultIcon(result.result)"
                 :title="result.result"
-                :sub-title="'AI 判定：' + (result.result || '') + '（置信度 ' + ((result.confidence || 0) * 100).toFixed(1) + '%）'"
+                :sub-title="resultTip(result.result) + '（置信度 ' + ((result.confidence || 0) * 100).toFixed(1) + '%）'"
               />
               <div class="prob-block">
                 <div class="prob-row" v-for="(p, name) in (result.probs || {})" :key="name">
@@ -225,6 +225,17 @@ export default {
         this.previewUrl = ''
       }
       if (this.$refs.upload) this.$refs.upload.clearFiles()
+    },
+    // 三分类结果对应 el-result 图标：COVID-19 最严重(error)，病毒性肺炎(warning)，正常(success)
+    resultIcon(label) {
+      if (label === 'COVID-19') return 'error'
+      if (label === 'NORMAL') return 'success'
+      return 'warning'
+    },
+    resultTip(label) {
+      if (label === 'COVID-19') return '疑似 COVID-19，请立即复核并隔离排查'
+      if (label === 'NORMAL') return '未见明显异常'
+      return '疑似病毒性肺炎，建议进一步检查'
     }
   }
 }

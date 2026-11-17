@@ -129,8 +129,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="输入指标" prop="featureJson" min-width="180" show-overflow-tooltip />
-        <el-table-column label="时间" align="center" prop="createTime" width="160" />
+        <el-table-column label="输入指标" min-width="180" show-overflow-tooltip>
+          <template slot-scope="scope">{{ formatFeatures(scope.row.featureJson) }}</template>
+        </el-table-column>
+        <el-table-column label="时间" align="center" width="160">
+          <template slot-scope="scope">{{ parseTime(scope.row.createTime, '{y}-{m}-{d} {h}:{i}:{s}') }}</template>
+        </el-table-column>
         <el-table-column label="操作" align="center" width="90">
           <template slot-scope="scope">
             <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)">删除</el-button>
@@ -216,9 +220,14 @@ export default {
         this.riskReady = names.length > 0
         const values = {}
         names.forEach(n => { values[n] = undefined })
-        // 联动点：若从患者档案带入年龄，自动填到 age 特征
-        if (this.prefillAge !== undefined && names.indexOf('age') !== -1) {
-          values.age = this.prefillAge
+        // 联动点：若从患者档案带入年龄，自动填到 age 特征。
+        // 特征名大小写以「后端 risk_features 返回值为准」，不能写死小写 'age'：
+        // 模型真相源 risk_features.json 用的是大写 'Age'，写死会导致预填永远不命中。
+        if (this.prefillAge !== undefined) {
+          const ageKey = names.find(n => String(n).toLowerCase() === 'age')
+          if (ageKey) {
+            values[ageKey] = this.prefillAge
+          }
         }
         this.form.values = values
       }).catch(() => { this.riskReady = false })
@@ -227,6 +236,23 @@ export default {
       const meta = FEATURE_META[name]
       if (!meta) return name
       return meta.unit ? `${meta.label}(${meta.unit})` : meta.label
+    },
+    // 历史记录的 featureJson 原始串转"中文标签=值"可读格式
+    formatFeatures(jsonStr) {
+      if (!jsonStr) return '-'
+      try {
+        const obj = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr
+        return Object.keys(obj)
+          .map(name => {
+            const meta = FEATURE_META[name]
+            const label = meta ? meta.label : name
+            const unit = meta && meta.unit ? `(${meta.unit})` : ''
+            return `${label}${unit}: ${obj[name]}`
+          })
+          .join('；')
+      } catch (e) {
+        return jsonStr
+      }
     },
     featurePlaceholder(name) {
       return (FEATURE_META[name] && FEATURE_META[name].placeholder) || ''

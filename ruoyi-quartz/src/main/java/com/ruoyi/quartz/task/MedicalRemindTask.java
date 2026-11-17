@@ -1,5 +1,6 @@
 package com.ruoyi.quartz.task;
 
+import com.ruoyi.common.config.MedicalProperties;
 import com.ruoyi.common.utils.SpringUtils;
 import com.ruoyi.system.domain.MedicalDrug;
 import com.ruoyi.system.domain.MedicalMessage;
@@ -30,13 +31,14 @@ public class MedicalRemindTask {
      * @param params 可选数字参数，作为库存预警阈值
      */
     public void scanLowStock(String params) {
-        int threshold = 10;
+        // 默认阈值取自统一配置 medical.low-stock-threshold，与药品预警接口、统计看板同口径
+        int threshold = SpringUtils.getBean(MedicalProperties.class).getLowStockThreshold();
         try {
             if (params != null && !params.trim().isEmpty()) {
                 threshold = Integer.parseInt(params.trim());
             }
         } catch (NumberFormatException e) {
-            log.warn("低库存阈值解析失败，使用默认值 {}", threshold);
+            log.warn("低库存阈值解析失败，使用配置默认值 {}", threshold);
         }
         IMedicalDrugService drugService = SpringUtils.getBean(IMedicalDrugService.class);
         List<MedicalDrug> lowStockList = drugService.selectMedicalDrugLowStock(threshold);

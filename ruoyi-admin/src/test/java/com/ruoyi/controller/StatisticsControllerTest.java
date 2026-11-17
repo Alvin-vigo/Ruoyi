@@ -49,9 +49,10 @@ class StatisticsControllerTest {
         data.put("drugTotal", 30);
         data.put("byDepartment", Collections.emptyList());
         data.put("byCategory", Collections.emptyList());
-        when(medicalStatisticsService.getDashboard()).thenReturn(data);
+        // getDashboard 需要 forceRefresh 形参；不传 refresh 时 Controller 传 false
+        when(medicalStatisticsService.getDashboard(false)).thenReturn(data);
 
-        AjaxResult result = statisticsController.dashboard();
+        AjaxResult result = statisticsController.dashboard(null);
 
         assertEquals(200, result.getCode());
         Map<String, Object> returned = (Map<String, Object>) result.get("data");
@@ -59,6 +60,20 @@ class StatisticsControllerTest {
         assertEquals(10, returned.get("patientTotal"));
         assertEquals(20, returned.get("diagnosisTotal"));
         assertEquals(30, returned.get("drugTotal"));
-        verify(medicalStatisticsService).getDashboard();
+        verify(medicalStatisticsService).getDashboard(false);
+    }
+
+    @Test
+    @DisplayName("看板统计：refresh=true 时应把强制刷新标志透传给 Service")
+    void dashboard_passesForceRefreshFlag() {
+        Map<String, Object> data = new HashMap<>();
+        data.put("patientTotal", 1);
+        when(medicalStatisticsService.getDashboard(true)).thenReturn(data);
+
+        AjaxResult result = statisticsController.dashboard(true);
+
+        assertEquals(200, result.getCode());
+        assertEquals(1, ((Map<String, Object>) result.get("data")).get("patientTotal"));
+        verify(medicalStatisticsService).getDashboard(true);
     }
 }

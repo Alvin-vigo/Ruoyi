@@ -4,7 +4,7 @@
     <div class="welcome">
       <div class="welcome-text">
         <h2>{{ greeting }}，{{ name }}</h2>
-        <p>欢迎使用 {{ title }}，今天也要加油鸭</p>
+        <p>欢迎使用 {{ title }}，请从左侧菜单进入业务办理</p>
       </div>
       <div class="welcome-date">
         <span class="date">{{ today }}</span>

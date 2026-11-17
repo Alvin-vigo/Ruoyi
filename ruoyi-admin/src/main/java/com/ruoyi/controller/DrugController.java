@@ -2,6 +2,7 @@ package com.ruoyi.controller;
 
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.ruoyi.common.config.MedicalProperties;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.common.core.page.TableSupport;
@@ -28,6 +29,9 @@ public class DrugController {
     @Autowired
     private IMedicalDrugService medicalDrugService;
 
+    @Autowired
+    private MedicalProperties medicalProperties;
+
     /**
      * 查询药品信息列表（分页）
      */
@@ -50,20 +54,27 @@ public class DrugController {
     }
 
     /**
-     * 查询低库存药品预警列表（库存数量小于等于阈值，默认阈值 10）
+     * 查询低库存药品预警列表
+     *
+     * <p>不传 threshold 时使用医疗参数配置中的统一阈值（medical.low-stock-threshold），
+     * 与统计看板、定时任务保持同一口径；传参则按调用方指定值临时覆盖。
      */
     @GetMapping("/low-stock")
-    public AjaxResult lowStock(@RequestParam(defaultValue = "10") int threshold) {
-        List<MedicalDrug> list = medicalDrugService.selectMedicalDrugLowStock(threshold);
+    public AjaxResult lowStock(@RequestParam(required = false) Integer threshold) {
+        int value = threshold != null ? threshold : medicalProperties.getLowStockThreshold();
+        List<MedicalDrug> list = medicalDrugService.selectMedicalDrugLowStock(value);
         return AjaxResult.success(list);
     }
 
     /**
-     * 查询近效期药品预警列表（有效期至距今天数小于等于预警天数，默认 90 天）
+     * 查询近效期药品预警列表
+     *
+     * <p>不传 warnDays 时使用 medical.near-expiry-warn-days（默认 90 天）。
      */
     @GetMapping("/near-expiry")
-    public AjaxResult nearExpiry(@RequestParam(defaultValue = "90") int warnDays) {
-        List<MedicalDrug> list = medicalDrugService.selectMedicalDrugNearExpiry(warnDays);
+    public AjaxResult nearExpiry(@RequestParam(required = false) Integer warnDays) {
+        int value = warnDays != null ? warnDays : medicalProperties.getNearExpiryWarnDays();
+        List<MedicalDrug> list = medicalDrugService.selectMedicalDrugNearExpiry(value);
         return AjaxResult.success(list);
     }
 

@@ -274,9 +274,11 @@
         <el-table-column label="有效期至" align="center" prop="expiryDate" width="120">
           <template slot-scope="scope"><span>{{ parseTime(scope.row.expiryDate, '{y}-{m}-{d}') }}</span></template>
         </el-table-column>
-        <el-table-column label="剩余天数" align="center" width="100">
+        <el-table-column label="剩余天数" align="center" width="130">
           <template slot-scope="scope">
-            <span :style="{ color: daysLeft(scope.row.expiryDate) <= 30 ? '#F56C6C' : '#E6A23C', fontWeight: 'bold' }">{{ daysLeft(scope.row.expiryDate) }}</span>
+            <span :style="{ color: daysLeft(scope.row.expiryDate) <= 0 ? '#F56C6C' : '#E6A23C', fontWeight: 'bold' }">
+              {{ daysLeft(scope.row.expiryDate) }} 天{{ daysLeft(scope.row.expiryDate) <= 0 ? '（已过期）' : '' }}
+            </span>
           </template>
         </el-table-column>
       </el-table>
@@ -349,12 +351,14 @@ export default {
       const map = { '0': '正常', '1': '停用' };
       return map[status] || status;
     },
-    /** 计算距有效期剩余天数 */
+    /** 计算距有效期剩余天数（已过期返回负数） */
     daysLeft(expiryDate) {
       if (!expiryDate) return '-';
-      const exp = new Date(String(expiryDate).replace(/-/g, '/'));
-      const now = new Date();
-      return Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+      const raw = String(expiryDate);
+      // 兼容 "2025-08-31" 与 ISO "2025-08-31T16:00:00.000+00:00" 两种返回格式
+      const exp = raw.indexOf('T') > -1 ? new Date(raw) : new Date(raw.replace(/-/g, '/'));
+      if (isNaN(exp.getTime())) return '-';
+      return Math.ceil((exp - new Date()) / (1000 * 60 * 60 * 24));
     },
     /** 打开低库存预警对话框并加载数据 */
     handleLowStock() {
@@ -450,6 +454,7 @@ export default {
     },
     /** 提交按钮 */
     submitForm() {
+      if (!this.$refs.form) return
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.drugId != null) {
@@ -480,7 +485,7 @@ export default {
     },
     /** 导出按钮操作 */
     handleExport() {
-      this.download('medical/drug/export', {
+      this.download('/medical/drug/export', {
         ...this.queryParams
       }, `drug_${new Date().getTime()}.xlsx`)
     }

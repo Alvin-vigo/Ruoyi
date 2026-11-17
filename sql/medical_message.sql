@@ -14,6 +14,6 @@ create table medical_message (
   PRIMARY KEY (message_id),
   KEY idx_receiver_read (receiver, read_status),
   KEY idx_type_related (type, related_id)
-) engine=innodb comment = '站内信消息表';
+) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment = '站内信消息表';
 
 commit;

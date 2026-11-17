@@ -14,9 +14,12 @@ spring:
     druid:
       # 连接信息必须下沉到 druid 层级，否则 DataSource 建出来没有 url
       driver-class-name: com.mysql.cj.jdbc.Driver
-      url: jdbc:mysql://localhost:3306/ruoyi_medical?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
-      username: root
-      password: "Aa*040908"
+      # DB_HOST/DB_PORT 外部化：容器编排下改为 mysql:3306；不设时行为与改造前完全一致（localhost:3306）。
+      url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/ruoyi_medical?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=true&serverTimezone=GMT%2B8
+      username: ${DB_USERNAME:root}
+      # 口令外部化：运行时由环境变量 DB_PASSWORD 提供，仓库中不保留任何明文凭据。
+      # 启动前请先设置 DB_PASSWORD（本机已加入用户环境变量；服务器可用 .env 或启动脚本注入）。
+      password: ${DB_PASSWORD:}
       # Druid 连接池配置
       initial-size: 10
       min-idle: 10
@@ -35,10 +38,10 @@ spring:
   redis:
     # 数据库索引（默认为0）
     database: 0
-    # 地址
-    host: localhost
+    # 地址：容器编排下改为 redis 服务名；不设时默认 localhost（兼容本机 Memurai）。
+    host: ${REDIS_HOST:localhost}
     # 端口
-    port: 6379
+    port: ${REDIS_PORT:6379}
     # 密码（无密码留空，生产建议设置）
     password:
     # 连接超时时间
@@ -53,6 +56,14 @@ spring:
         max-idle: 10
         # 连接池中的最小空闲连接
         min-idle: 0
+
+# 医疗业务参数（统一阈值真相源，对应 MedicalProperties）
+# 低库存阈值曾出现三套口径（看板 50 / 药品页 10 / 定时任务 10），现收敛到此一处。
+medical:
+  # 低库存预警阈值：库存 <= 该值即需补货（看板、药品预警、定时任务共用）
+  low-stock-threshold: 10
+  # 近效期预警天数：距有效期不足该天数即预警（仅提示，不拦截发药）
+  near-expiry-warn-days: 90
 
 # MyBatis 配置
 mybatis:

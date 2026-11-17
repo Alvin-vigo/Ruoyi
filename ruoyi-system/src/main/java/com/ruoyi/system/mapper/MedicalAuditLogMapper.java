@@ -25,4 +25,12 @@ public interface MedicalAuditLogMapper {
      * @return 审计日志集合
      */
     public java.util.List<MedicalAuditLog> selectMedicalAuditLogList(MedicalAuditLog medicalAuditLog);
+
+    /**
+     * 统计审计日志条数（走 COUNT(1)，不得用列表 size 代替）
+     *
+     * @param medicalAuditLog 查询条件，与列表接口一致
+     * @return 条数
+     */
+    public Long selectMedicalAuditLogCount(MedicalAuditLog medicalAuditLog);
 }

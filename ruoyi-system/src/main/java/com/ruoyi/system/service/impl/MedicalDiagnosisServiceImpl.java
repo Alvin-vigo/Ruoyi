@@ -3,8 +3,10 @@ package com.ruoyi.system.service.impl;
 import com.ruoyi.system.domain.MedicalDiagnosis;
 import com.ruoyi.system.mapper.MedicalDiagnosisMapper;
 import com.ruoyi.system.service.IMedicalDiagnosisService;
+import com.ruoyi.system.service.IMedicalIdAllocatorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,9 @@ public class MedicalDiagnosisServiceImpl implements IMedicalDiagnosisService {
 
     @Autowired
     private MedicalDiagnosisMapper medicalDiagnosisMapper;
+
+    @Autowired
+    private IMedicalIdAllocatorService idAllocatorService;
 
     /**
      * 查询诊疗信息
@@ -48,8 +53,23 @@ public class MedicalDiagnosisServiceImpl implements IMedicalDiagnosisService {
      * @param medicalDiagnosis 诊疗信息
      * @return 结果
      */
+    /**
+     * 新增诊疗信息
+     *
+     * <p>未指定主键时，走 {@link IMedicalIdAllocatorService#allocateDiagnosisId()} 原子分配，
+     * 取值语义仍为「当前最大 ID + 1」，因此删除记录后新记录可复用被删的 ID（AC-08）。
+     * 本方法加 {@code @Transactional} 是必需的：分配器依赖同一个事务持有行锁直到 INSERT 提交，
+     * 否则并发请求会读到同一个 MAX 值并撞主键。
+     *
+     * @param medicalDiagnosis 诊疗信息
+     * @return 结果
+     */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public int insertMedicalDiagnosis(MedicalDiagnosis medicalDiagnosis) {
+        if (medicalDiagnosis.getDiagnosisId() == null) {
+            medicalDiagnosis.setDiagnosisId(idAllocatorService.allocateDiagnosisId());
+        }
         return medicalDiagnosisMapper.insertMedicalDiagnosis(medicalDiagnosis);
     }
 

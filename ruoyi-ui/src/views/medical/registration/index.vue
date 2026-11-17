@@ -141,8 +141,13 @@ export default {
     }
   },
   computed: {
+    /** 只能挂今天及以后的号源（过滤已过期的排班） */
     availableSchedules() {
-      return this.scheduleOptions
+      const today = this.parseTime(new Date(), '{y}-{m}-{d}')
+      return this.scheduleOptions.filter(s => {
+        const d = this.parseTime(s.scheduleDate, '{y}-{m}-{d}')
+        return d && d >= today
+      })
     }
   },
   created() {

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.MedicalIdAllocatorMapper">
+
+    <resultMap type="MedicalIdAllocator" id="MedicalIdAllocatorResult">
+        <id     property="bizKey"     column="biz_key"     />
+        <result property="lastId"     column="last_id"     />
+        <result property="updateTime" column="update_time" />
+    </resultMap>
+
+    <!--
+      行锁读取：必须在事务内调用。
+      同一时刻只允许一个事务持有该行的排他锁，从而把所有 ID 分配请求串行化。
+      锁在事务提交 / 回滚时自动释放，不需要显式解锁。
+    -->
+    <select id="selectForUpdate" parameterType="String" resultMap="MedicalIdAllocatorResult">
+        select biz_key, last_id, update_time
+        from medical_id_allocator
+        where biz_key = #{bizKey}
+        for update
+    </select>
+
+    <update id="updateLastId">
+        update medical_id_allocator
+        set last_id = #{lastId}, update_time = sysdate()
+        where biz_key = #{bizKey}
+    </update>
+
+</mapper>

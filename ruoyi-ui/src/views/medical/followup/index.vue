@@ -319,6 +319,7 @@ export default {
       });
     },
     submitForm() {
+      if (!this.$refs.form) return
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.followupId != null) {
@@ -348,7 +349,7 @@ export default {
     },
     handleExport() {
       const params = this.addDateRange(this.queryParams, this.dateRange, 'followupDate');
-      this.download('medical/followup/export', {
+      this.download('/medical/followup/export', {
         ...params
       }, `followup_${new Date().getTime()}.xlsx`)
     }

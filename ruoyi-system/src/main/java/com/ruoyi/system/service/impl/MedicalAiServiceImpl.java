@@ -141,10 +141,9 @@ public class MedicalAiServiceImpl implements IMedicalAiService {
         entity.setPatientId(patientId);
         entity.setImgUrl(str(data, "img_url", ""));
         entity.setPredictResult(str(data, "result", ""));
-        entity.setResultLabel(str(data, "result_label", ""));
         entity.setConfidence(dec(data, "confidence"));
-        entity.setProbNormal(dec(data, "prob_normal"));
-        entity.setProbAbnormal(dec(data, "prob_abnormal"));
+        JsonNode probsNode = data.get("probs");
+        entity.setProbsJson(probsNode != null ? probsNode.toString() : "");
         entity.setDevice(str(data, "device", ""));
         entity.setElapsedMs(lng(data, "elapsed_ms"));
         entity.setCreateBy("ai-service");
@@ -159,7 +158,7 @@ public class MedicalAiServiceImpl implements IMedicalAiService {
     // ==================== 模块④ RAG 导诊 ====================
     @Override
     public JsonNode ragChat(AiChatRequest request) {
-        JsonNode resp = aiHttpUtil.ragChat(request.getQuestion(), request.getTopK());
+        JsonNode resp = aiHttpUtil.ragChat(request.getQuestion(), request.getTopK(), request.getSessionId());
         ensureSuccess(resp);
         return data(resp);
     }

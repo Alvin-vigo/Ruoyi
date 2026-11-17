@@ -2,6 +2,7 @@ package com.ruoyi.system.service.impl;
 
 import com.ruoyi.system.domain.MedicalDiagnosis;
 import com.ruoyi.system.mapper.MedicalDiagnosisMapper;
+import com.ruoyi.system.service.IMedicalIdAllocatorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -29,6 +31,9 @@ class MedicalDiagnosisServiceImplTest {
 
     @Mock
     private MedicalDiagnosisMapper medicalDiagnosisMapper;
+
+    @Mock
+    private IMedicalIdAllocatorService idAllocatorService;
 
     @InjectMocks
     private MedicalDiagnosisServiceImpl medicalDiagnosisService;
@@ -70,6 +75,31 @@ class MedicalDiagnosisServiceImplTest {
 
         assertEquals(1, medicalDiagnosisService.insertMedicalDiagnosis(sample));
         verify(medicalDiagnosisMapper).insertMedicalDiagnosis(sample);
+    }
+
+    @Test
+    @DisplayName("新增且未指定ID时，应向原子ID分配器取号并写回实体（AC-08）")
+    void insert_withoutId_allocatesAtomically() {
+        when(idAllocatorService.allocateDiagnosisId()).thenReturn(42L);
+        when(medicalDiagnosisMapper.insertMedicalDiagnosis(any())).thenReturn(1);
+
+        assertEquals(1, medicalDiagnosisService.insertMedicalDiagnosis(sample));
+
+        assertEquals(Long.valueOf(42L), sample.getDiagnosisId(),
+                "未指定主键时应由分配器填入，保证 MAX+1 的复用语义且并发不撞主键");
+        verify(idAllocatorService, times(1)).allocateDiagnosisId();
+    }
+
+    @Test
+    @DisplayName("新增且调用方已指定ID时，不重复分配（保留手动指定能力）")
+    void insert_withId_doesNotAllocate() {
+        sample.setDiagnosisId(99L);
+        when(medicalDiagnosisMapper.insertMedicalDiagnosis(any())).thenReturn(1);
+
+        assertEquals(1, medicalDiagnosisService.insertMedicalDiagnosis(sample));
+
+        assertEquals(Long.valueOf(99L), sample.getDiagnosisId());
+        verify(idAllocatorService, never()).allocateDiagnosisId();
     }
 
     @Test

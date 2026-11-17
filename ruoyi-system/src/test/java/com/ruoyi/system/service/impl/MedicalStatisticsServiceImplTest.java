@@ -1,5 +1,6 @@
 package com.ruoyi.system.service.impl;
 
+import com.ruoyi.common.config.MedicalProperties;
 import com.ruoyi.system.mapper.MedicalStatisticsMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,12 +31,18 @@ class MedicalStatisticsServiceImplTest {
     @Mock
     private MedicalStatisticsMapper medicalStatisticsMapper;
 
+    @Mock
+    private MedicalProperties medicalProperties;
+
     private MedicalStatisticsServiceImpl statisticsService;
 
     @BeforeEach
     void setUp() {
         statisticsService = new MedicalStatisticsServiceImpl();
         ReflectionTestUtils.setField(statisticsService, "medicalStatisticsMapper", medicalStatisticsMapper);
+        ReflectionTestUtils.setField(statisticsService, "medicalProperties", medicalProperties);
+        // 低库存阈值来自统一配置，这里给一个确定值，避免依赖 Mockito 的默认值
+        when(medicalProperties.getLowStockThreshold()).thenReturn(10);
     }
 
     @Test
@@ -54,7 +61,7 @@ class MedicalStatisticsServiceImplTest {
         when(medicalStatisticsMapper.selectDiagnosisByDepartment()).thenReturn(Collections.singletonList(dept));
         when(medicalStatisticsMapper.selectDrugByCategory()).thenReturn(Collections.singletonList(cat));
 
-        Map<String, Object> result = statisticsService.getDashboard();
+        Map<String, Object> result = statisticsService.getDashboard(false);
 
         assertEquals(10, result.get("patientTotal"));
         assertEquals(20, result.get("diagnosisTotal"));
@@ -91,7 +98,7 @@ class MedicalStatisticsServiceImplTest {
         when(medicalStatisticsMapper.selectPatientGenderStats()).thenReturn(Collections.singletonList(gender));
         when(medicalStatisticsMapper.selectPatientAgeStats()).thenReturn(Collections.singletonList(age));
 
-        Map<String, Object> result = statisticsService.getDashboard();
+        Map<String, Object> result = statisticsService.getDashboard(false);
 
         assertEquals(1, ((List<?>) result.get("costByDepartment")).size());
         assertEquals(1, ((List<?>) result.get("costTrend")).size());

@@ -409,6 +409,7 @@ export default {
       });
     },
     submitForm() {
+      if (!this.$refs.form) return
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.patientId != null) {
@@ -437,7 +438,7 @@ export default {
       }).catch(() => {});
     },
     handleExport() {
-      this.download('medical/patient/export', {
+      this.download('/medical/patient/export', {
         ...this.queryParams
       }, `patient_${new Date().getTime()}.xlsx`)
     }

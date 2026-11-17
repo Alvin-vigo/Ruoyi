@@ -170,7 +170,7 @@ export default {
     },
     handleExport() {
       const params = this.addDateRange(this.queryParams, this.dateRange, 'visitDate');
-      this.download('medical/diagnosis/export', {
+      this.download('/medical/diagnosis/export', {
         ...params
       }, `诊疗费用明细_${new Date().getTime()}.xlsx`)
     }

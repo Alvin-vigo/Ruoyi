@@ -8,7 +8,7 @@ set PROJECT_DIR=D:\若依医疗\若依医疗
 set JAVA_EXE=D:\jdk8\bin\java.exe
 set NPM_EXE=D:\nodejs16\npm.cmd
 set AI_PYTHON=C:\Users\ALVIN\.workbuddy\binaries\python\envs\ruoyi-ai\Scripts\python.exe
-set MEMURAI_EXE=D:\AI\Memurai\memurai.exe
+set MEMURAI_EXE=D:\Memurai\memurai.exe
 :: MySQL 服务名：常见为 MySQL80 或 MySQL，下面会自动回退
 set MYSQL_SVC=MySQL80
 
@@ -33,18 +33,18 @@ if exist "%MEMURAI_EXE%" (
 echo [..] 等待 MySQL / Redis 就绪（8 秒）...
 timeout /t 8 /nobreak >nul
 
-:: 3) 启动后端 Spring Boot（已预编译则直接跑 jar，否则先构建）
+:: 3) 启动后端 Spring Boot（已预编译则直接跑 jar，否则先构建；--server.port 固定 8080，防环境变量干扰）
 echo [3/5] 启动后端服务(8080)...
 cd /d "%PROJECT_DIR%"
 if exist ruoyi-admin\target\ruoyi-admin-1.0.0.jar (
-  start "" "%JAVA_EXE%" -jar ruoyi-admin\target\ruoyi-admin-1.0.0.jar
+  start "" "%JAVA_EXE%" -jar ruoyi-admin\target\ruoyi-admin-1.0.0.jar --server.port=8080
 ) else (
   echo [INFO] 未找到预编译 jar，开始构建（首次约几分钟，请耐心等待）...
   call mvnw.cmd clean install -DskipTests
-  start "" "%JAVA_EXE%" -jar ruoyi-admin\target\ruoyi-admin-1.0.0.jar
+  start "" "%JAVA_EXE%" -jar ruoyi-admin\target\ruoyi-admin-1.0.0.jar --server.port=8080
 )
 
-:: 4) 启动前端 Vue 开发服务(默认 80 端口，dev 模式含代理)
+:: 4) 启动前端 Vue 开发服务(8081 端口，dev 模式含代理)
 echo [4/5] 启动前端服务(dev)...
 start "" cmd /k "cd /d "%PROJECT_DIR%\ruoyi-ui" && "%NPM_EXE%" run dev"
 
@@ -56,12 +56,13 @@ echo.
 echo ============================================
 echo  全部服务已尝试启动，请查看各弹出的窗口：
 echo    后端  : http://127.0.0.1:8080
-echo    前端  : http://127.0.0.1  (或 npm 提示的端口)
+echo    前端  : http://127.0.0.1:8081
 echo    AI    : http://127.0.0.1:8000/docs
 echo.
-echo  提示：AI 大模型(Ollama)需单独启动，命令：
+echo  说明：本脚本不再自动启动 Ollama(11434)。
+echo  如需 AI 病历生成 / 导诊问答的大模型能力，请手动启动：
 echo    D:\AI\Ollama\ollama.exe serve
-echo    再拉取模型：ollama pull qwen2.5:7b-instruct-q4_K_M
+echo  未启动时相关功能自动降级（病历走模板草稿、导诊走纯检索），不影响其余功能。
 echo ============================================
 echo.
 pause

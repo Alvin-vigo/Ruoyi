@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>若依医疗管理系统 · 全面技术分析报告</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#ffffff; --ink:#1f2329; --sub:#5c6673; --line:#e3e6ec;
+    --accent:#2f6fd0; --accent-soft:#eaf2fd; --warn:#b26a00; --warn-soft:#fff5e6;
+    --danger:#c0392b; --danger-soft:#fdecea; --ok:#1f8a4c; --ok-soft:#e8f6ee;
+    --mono:#0f2b46;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:-apple-system,"Segoe UI","Microsoft YaHei",Roboto,sans-serif;
+       font-size:15px;line-height:1.75;}
+  .wrap{max-width:1080px;margin:0 auto;padding:40px 28px 80px;}
+  header{background:linear-gradient(135deg,#2f6fd0,#4a8fe0);color:#fff;border-radius:14px;
+         padding:34px 36px;margin-bottom:28px;}
+  header h1{margin:0 0 8px;font-size:27px;letter-spacing:.5px;}
+  header p{margin:0;opacity:.92;font-size:14px;}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px;}
+  .meta span{background:rgba(255,255,255,.18);border-radius:20px;padding:4px 14px;font-size:13px;}
+  section{background:var(--card);border:1px solid var(--line);border-radius:12px;
+          padding:26px 30px;margin-bottom:22px;}
+  h2{font-size:20px;margin:0 0 4px;padding-bottom:12px;border-bottom:2px solid var(--accent-soft);
+     display:flex;align-items:center;gap:10px;}
+  h2 .num{background:var(--accent);color:#fff;width:28px;height:28px;border-radius:8px;
+          display:inline-flex;align-items:center;justify-content:center;font-size:14px;}
+  h3{font-size:16px;margin:26px 0 10px;color:var(--accent);}
+  h4{font-size:14.5px;margin:18px 0 8px;color:var(--ink);}
+  p{margin:8px 0;}
+  ul,ol{margin:8px 0;padding-left:22px;}
+  li{margin:5px 0;}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13.5px;}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
+  th{background:#f0f3f8;font-weight:600;white-space:nowrap;}
+  tbody tr:nth-child(even){background:#fafbfc;}
+  code{background:#eef1f6;padding:1px 6px;border-radius:4px;font-family:Consolas,Monaco,monospace;
+       font-size:12.8px;color:var(--mono);word-break:break-all;}
+  pre{background:#0f2b46;color:#d8e4f0;padding:14px 16px;border-radius:8px;overflow-x:auto;
+      font-family:Consolas,Monaco,monospace;font-size:12.6px;line-height:1.6;margin:10px 0;}
+  pre .cm{color:#7ea6c9;}
+  .path{font-family:Consolas,Monaco,monospace;font-size:12.4px;color:#5c6673;
+        background:#f2f4f8;padding:1px 5px;border-radius:4px;}
+  .tag{display:inline-block;padding:1px 9px;border-radius:5px;font-size:12px;font-weight:600;
+       margin-right:6px;}
+  .t-p0{background:var(--danger-soft);color:var(--danger);}
+  .t-p1{background:var(--warn-soft);color:var(--warn);}
+  .t-p2{background:var(--ok-soft);color:var(--ok);}
+  .t-info{background:var(--accent-soft);color:var(--accent);}
+  .callout{border-left:4px solid var(--accent);background:var(--accent-soft);
+           padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0;font-size:14px;}
+  .callout.warn{border-color:var(--warn);background:var(--warn-soft);}
+  .callout.danger{border-color:var(--danger);background:var(--danger-soft);}
+  .callout.ok{border-color:var(--ok);background:var(--ok-soft);}
+  .flow{background:#fbfcfe;border:1px dashed var(--line);border-radius:8px;padding:14px 16px;
+        font-family:Consolas,Monaco,monospace;font-size:12.8px;line-height:1.9;
+        white-space:pre-wrap;color:var(--mono);margin:10px 0;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:14px 0;}
+  .card{background:#fafbfc;border:1px solid var(--line);border-radius:9px;padding:14px 16px;}
+  .card .k{font-size:12.5px;color:var(--sub);}
+  .card .v{font-size:19px;font-weight:700;color:var(--accent);margin-top:2px;}
+  .card .d{font-size:12.5px;color:var(--sub);margin-top:4px;}
+  .toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 26px;margin-bottom:22px;}
+  .toc ol{columns:2;column-gap:36px;}
+  .toc a{color:var(--accent);text-decoration:none;}
+  .toc a:hover{text-decoration:underline;}
+  footer{text-align:center;color:var(--sub);font-size:13px;padding:20px 0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>若依医疗管理系统 · 全面技术分析报告</h1>
+  <p>基于全量源码 / 配置 / 构建脚本 / 文档的系统性梳理 —— 架构、模块、数据流、调用链、依赖与风险</p>
+  <div class="meta">
+    <span>扫描根目录：D:/若依医疗/若依医疗</span>
+    <span>生成时间：2026-10-08</span>
+    <span>Git HEAD：a7091d7（5 次提交）</span>
+    <span>工作区：17 项未提交改动</span>
+  </div>
+</header>
+
+<div class="toc">
+  <strong>目录</strong>
+  <ol>
+    <li><a href="#s1">项目概述</a></li>
+    <li><a href="#s2">技术栈与运行环境</a></li>
+    <li><a href="#s3">架构设计</a></li>
+    <li><a href="#s4">模块划分与目录职责</a></li>
+    <li><a href="#s5">核心业务流程与数据流</a></li>
+    <li><a href="#s6">程序入口与关键调用链</a></li>
+    <li><a href="#s7">模块依赖关系</a></li>
+    <li><a href="#s8">已实现功能清单</a></li>
+    <li><a href="#s9">外部依赖与对外接口</a></li>
+    <li><a href="#s10">关键实现细节</a></li>
+    <li><a href="#s11">潜在问题与改进点</a></li>
+    <li><a href="#s12">遗漏 / 难以理解之处</a></li>
+  </ol>
+</div>
+
+<!-- ============ 1 ============ -->
+<section id="s1">
+<h2><span class="num">1</span>项目概述</h2>
+
+<p>一套基于 <strong>RuoYi-Vue 深度裁剪</strong> 的轻量级医疗业务管理系统。核心定位是"门诊业务闭环 + 本地 AI 辅助"，覆盖
+<strong>挂号 → 就诊 → 诊疗 → 开方 → 发药 → 退药 → 随访</strong> 全流程，并集成 4 个本地推理的 AI 模块（病历生成、疾病风险预测、胸片初筛、RAG 智能导诊）。
+全部组件本地部署，不依赖任何公网服务。</p>
+
+<div class="grid">
+  <div class="card"><div class="k">后端 Java 源文件</div><div class="v">141</div><div class="d">admin 17 / system 65 / quartz 20 / common 16 / framework 12 / generator 11</div></div>
+  <div class="card"><div class="k">Mapper XML</div><div class="v">22</div><div class="d">system 18 / generator 2 / quartz 2</div></div>
+  <div class="card"><div class="k">后端 HTTP 端点</div><div class="v">83</div><div class="d">ruoyi-admin 下 13 个 Controller 的 @XxxMapping 总数</div></div>
+  <div class="card"><div class="k">业务数据表</div><div class="v">18</div><div class="d">medical_* 18 张 + 若依原生 sys_* / qrtz_*</div></div>
+  <div class="card"><div class="k">前端页面</div><div class="v">21</div><div class="d">views/medical 下 16 个业务页 + 5 个 AI 页</div></div>
+  <div class="card"><div class="k">AI 服务</div><div class="v">13 py</div><div class="d">ruoyi-ai 根目录 9 个 + scripts 4 个</div></div>
+  <div class="card"><div class="k">单元测试</div><div class="v">6 个 / 589 行</div><div class="d">纯 Mockito，不依赖 Spring 容器</div></div>
+  <div class="card"><div class="k">SQL 脚本</div><div class="v">14 个</div><div class="d">sql/ 目录，含 2 个 patch 版本</div></div>
+</div>
+
+<h3>1.1 与标准 RuoYi 的裁剪差异（重要背景）</h3>
+<p>这不是"装了医疗插件的若依"，而是<strong>把若依砍到骨架再长出新业务</strong>。已确认的裁剪点：</p>
+<ul>
+  <li><span class="tag t-info">裁剪</span><strong>无数据权限（DataScope）</strong>：<code>BaseEntity</code> 只有 5 个字段（createBy/createTime/updateBy/updateTime/remark），<strong>没有原版的 <code>params</code> Map</strong>，因此 Mapper XML 中不存在 <code>params.beginTime</code> 写法，时间范围查询改用实体上的显式 <code>beginXxx/endXxx</code> 字段。<span class="path">ruoyi-common/src/main/java/com/ruoyi/common/core/domain/BaseEntity.java</span></li>
+  <li><span class="tag t-info">裁剪</span><strong>无 <code>@PreAuthorize</code> / <code>@Log</code> / <code>BusinessType</code></strong>：这些类不存在于 common 模块，业务 Controller 一律不写权限注解，只靠 Security 全局 token 鉴权。</li>
+  <li><span class="tag t-info">裁剪</span><strong>无动态路由</strong>：后端没有 <code>/getRouters</code> 接口，前端菜单是 <code>router/index.js</code> 里的静态常量数组。<span class="path">ruoyi-ui/src/router/index.js</span></li>
+  <li><span class="tag t-info">裁剪</span><strong>按钮级权限形同虚设</strong>：<code>v-hasPermi</code> 的 <code>hasPermission()</code> 恒返回 <code>true</code>。<span class="path">ruoyi-ui/src/directive/permission.js</span></li>
+  <li><span class="tag t-info">裁剪</span><strong>无验证码、无 Swagger/Knife4j</strong>：后端没有接口文档依赖，接口文档靠 <span class="path">doc/接口文档.md</span> 手工维护。</li>
+  <li><span class="tag t-info">新增</span>业务 Controller 不使用 <code>BaseController</code>，而是自写私有 <code>toAjax(int)</code> + <code>PageHelper.startPage()</code> + <code>TableSupport.getDataTable()</code>。</li>
+</ul>
+</section>
+
+<!-- ============ 2 ============ -->
+<section id="s2">
+<h2><span class="num">2</span>技术栈与运行环境</h2>
+
+<h3>2.1 后端</h3>
+<table>
+  <tr><th>组件</th><th>版本</th><th>证据位置</th></tr>
+  <tr><td>JDK</td><td>1.8</td><td><span class="path">pom.xml</span> <code>&lt;java.version&gt;1.8</code>；<span class="path">start.bat:8</span> <code>D:\jdk8\bin\java.exe</code></td></tr>
+  <tr><td>Spring Boot</td><td>2.7.18</td><td><span class="path">pom.xml</span> <code>&lt;spring-boot.version&gt;</code></td></tr>
+  <tr><td>安全</td><td>Spring Security + JWT（自实现过滤器）</td><td><span class="path">ruoyi-framework/.../config/SecurityConfig.java</span></td></tr>
+  <tr><td>ORM</td><td>MyBatis 2.3.2</td><td><span class="path">pom.xml</span> <code>&lt;mybatis.starter.version&gt;</code></td></tr>
+  <tr><td>连接池</td><td>Druid 1.2.20</td><td><span class="path">pom.xml</span>，实际数据源配置在 <span class="path">application.yml</span> 的 <code>spring.datasource.druid.*</code> 层级</td></tr>
+  <tr><td>分页</td><td>PageHelper 1.4.7</td><td><span class="path">application.yml</span> <code>pagehelper.helper-dialect: mysql</code></td></tr>
+  <tr><td>调度</td><td>spring-boot-starter-quartz</td><td><span class="path">ruoyi-quartz/pom.xml</span></td></tr>
+  <tr><td>数据库驱动</td><td>mysql-connector-j 8.0.33</td><td><span class="path">pom.xml</span></td></tr>
+  <tr><td>Excel</td><td>easyexcel（依赖）+ 自写 <code>ExcelUtil</code>（实际使用）</td><td><span class="path">ruoyi-common/pom.xml</span> 与 <span class="path">common/utils/poi/ExcelUtil.java</span> 并存</td></tr>
+  <tr><td>其他</td><td>Lombok、fastjson、commons-lang3、commons-pool2、javax.servlet-api</td><td><span class="path">ruoyi-common/pom.xml</span></td></tr>
+</table>
+
+<h3>2.2 前端</h3>
+<table>
+  <tr><th>组件</th><th>版本</th><th>说明</th></tr>
+  <tr><td>Vue</td><td>2.6.12</td><td>Vue2，非 Vue3</td></tr>
+  <tr><td>Element UI</td><td>2.15.6</td><td>全量引入（<code>Vue.use(ElementUI)</code>）</td></tr>
+  <tr><td>vue-router / vuex</td><td>3.4.9 / 3.6.0</td><td></td></tr>
+  <tr><td>axios</td><td>0.21.1</td><td></td></tr>
+  <tr><td>@vue/cli-service</td><td>~4.4.0</td><td>配合 Node 16</td></tr>
+  <tr><td>sass / sass-loader</td><td>^1.32.13 / ^10.5.2</td><td>dart-sass</td></tr>
+  <tr><td>echarts</td><td><strong>未安装</strong></td><td><span class="path">vue.config.js</span> 里配了 chunk-echarts 分包规则，但 <span class="path">package.json</span> 无此依赖；统计看板用 el-progress 手绘</td></tr>
+</table>
+<p><strong>构建脚本注意</strong>：只有 <code>dev</code> / <code>build:prod</code> / <code>build:stage</code>，<strong>没有 <code>build</code></strong>。<span class="path">ruoyi-ui/package.json</span></p>
+
+<h3>2.3 AI 微服务（ruoyi-ai）</h3>
+<table>
+  <tr><th>能力</th><th>技术</th><th>关键文件</th></tr>
+  <tr><td>Web 框架</td><td>FastAPI + uvicorn，端口 8000</td><td><span class="path">ruoyi-ai/main.py</span>、<span class="path">config.py:79-80</span></td></tr>
+  <tr><td>LLM</td><td>Ollama <code>qwen2.5:7b-instruct-q4_K_M</code>，11434</td><td><span class="path">config.py:26-38</span>、<span class="path">llm.py</span></td></tr>
+  <tr><td>风险预测</td><td>scikit-learn Pipeline（StandardScaler + LogisticRegression）+ joblib</td><td><span class="path">risk.py</span>、<span class="path">scripts/train_risk.py</span></td></tr>
+  <tr><td>胸片</td><td>PyTorch ResNet18 三分类</td><td><span class="path">chest.py</span>、<span class="path">scripts/train_chest.py</span></td></tr>
+  <tr><td>RAG</td><td>Chroma 持久化向量库 + sentence-transformers 本地 embedding</td><td><span class="path">rag.py</span>、<span class="path">scripts/build_rag_db.py</span></td></tr>
+</table>
+<p>本地模型资产（<strong>全部被 .gitignore 排除，不入仓库</strong>）：</p>
+<ul>
+  <li><span class="path">models/chest_cnn.pth</span> — 44.8 MB；<span class="path">models/chest_classes.json</span> — <code>["COVID-19","NORMAL","Viral Pneumonia"]</code></li>
+  <li><span class="path">models/model_risk.pkl</span> — 1.9 KB；<span class="path">models/risk_features.json</span> — 8 特征顺序真相源</li>
+  <li><span class="path">models/paraphrase-multilingual-MiniLM-L12-v2/</span> — 约 500 MB 本地 embedding</li>
+  <li><span class="path">data/chroma_db/chroma.sqlite3</span> — 向量库；<span class="path">data/uploads/</span> — 7 张胸片原图</li>
+</ul>
+
+<h3>2.4 运行时端口与外部服务</h3>
+<table>
+  <tr><th>服务</th><th>地址</th><th>作用</th><th>启动方式</th></tr>
+  <tr><td>MySQL</td><td>localhost:3306 / <code>ruoyi_medical</code></td><td>主库</td><td><span class="path">start.bat</span> <code>net start MySQL80</code></td></tr>
+  <tr><td>Redis（Memurai）</td><td>localhost:6379，无密码</td><td><strong>仅存登录 token</strong></td><td><span class="path">start.bat:27-31</span></td></tr>
+  <tr><td>后端 Spring Boot</td><td>8080</td><td>业务 API</td><td><code>java -jar ruoyi-admin-1.0.0.jar --server.port=8080</code></td></tr>
+  <tr><td>前端 dev server</td><td>8081</td><td>页面 + 代理</td><td><code>npm run dev</code></td></tr>
+  <tr><td>AI FastAPI</td><td>127.0.0.1:8000</td><td>4 个 AI 模块</td><td><code>uvicorn main:app</code>（专用 venv）</td></tr>
+  <tr><td>Ollama</td><td>127.0.0.1:11434</td><td>大模型推理</td><td><code>ollama serve</code></td></tr>
+</table>
+<div class="callout warn">
+<strong>环境事实修正：</strong>当前 <span class="path">ruoyi-admin/src/main/resources/application.yml:19</span> 的数据库密码是
+<code>&lt;已脱敏&gt;</code>（曾以明文写在配置里，现已改为环境变量注入）。
+</div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section id="s3">
+<h2><span class="num">3</span>架构设计</h2>
+
+<h3>3.1 部署拓扑</h3>
+<div class="flow">浏览器  Vue2 + Element UI                :8081
+   │
+   │ ① /login /logout /getInfo /medical /monitor /system /tool /gen   → 代理到 8080
+   │ ② /ai-uploads（胸片原图）                                        → 代理到 8000
+   │ ③ AI 流式 SSE（generateRecordStream）           直连 8000（**绕过后端**）
+   ▼
+后端  Spring Boot 2.7（RuoYi 裁剪）      :8080
+   │  ├─ Spring Security + JWT Filter ──► Redis(Memurai:6379)  仅会话
+   │  ├─ MyBatis / Druid ─────────────► MySQL(ruoyi_medical:3306)
+   │  └─ AiHttpUtil（RestTemplate，readTimeout 130s）
+   ▼
+AI 服务  FastAPI                          :8000
+   ├─► Ollama :11434        qwen2.5:7b-instruct-q4_K_M（病历生成 / RAG 生成）
+   ├─► models/model_risk.pkl           sklearn 推理（风险预测）
+   ├─► models/chest_cnn.pth            PyTorch ResNet18（胸片三分类）
+   └─► data/chroma_db + 本地 embedding  Chroma 检索（RAG）</div>
+
+<p><strong>三条链路的取舍</strong>：普通请求走"前端→后端→AI"的代理链（便于鉴权与落库）；胸片原图直连 AI 的静态目录（避免后端做文件流中转）；AI 流式 SSE 前端直连 FastAPI（避免后端实现 SSE 转发）。代价是 <strong>③ 这条链完全不带 token</strong>，靠 FastAPI 全开 CORS 兜底。</p>
+
+<h3>3.2 分层结构</h3>
+<table>
+  <tr><th>层</th><th>位置</th><th>职责</th><th>约束</th></tr>
+  <tr><td>接入层</td><td><span class="path">ruoyi-admin/.../controller/</span></td><td>13 个 Controller，83 个端点，参数接收 + 转 AjaxResult</td><td>不 extends BaseController；分页手写 PageHelper</td></tr>
+  <tr><td>业务层</td><td><span class="path">ruoyi-system/.../service/impl/</span></td><td>事务边界、状态机、校验、审计</td><td>业务异常统一 <code>ServiceException</code></td></tr>
+  <tr><td>数据层</td><td><span class="path">ruoyi-system/.../mapper/</span> + <span class="path">ruoyi-system/src/main/resources/mapper/</span></td><td>MyBatis 接口 + XML</td><td><code>classpath*:mapper/**/*.xml</code> 多模块扫描</td></tr>
+  <tr><td>基础设施</td><td><span class="path">ruoyi-framework/</span></td><td>Security、JWT、Redis、CORS、全局异常</td><td>12 个类，极度精简</td></tr>
+  <tr><td>公共</td><td><span class="path">ruoyi-common/</span></td><td>AjaxResult、BaseEntity、分页、Excel、工具类</td><td>16 个类</td></tr>
+  <tr><td>横切</td><td><span class="path">ruoyi-quartz/</span>、<span class="path">ruoyi-generator/</span></td><td>定时任务、代码生成（保留但业务未深度使用）</td><td></td></tr>
+  <tr><td>AI</td><td><span class="path">ruoyi-ai/</span></td><td>独立进程 FastAPI</td><td>与 Java 只通过 HTTP 耦合</td></tr>
+</table>
+
+<div class="callout danger">
+<strong>架构上的一个反常点：</strong>依赖方向是 <code>ruoyi-framework → ruoyi-system → ruoyi-common</code>，
+即 <strong>framework 依赖 system</strong>，与标准 RuoYi（system → framework）相反。
+证据：<span class="path">ruoyi-framework/pom.xml</span> 中 <code>&lt;artifactId&gt;ruoyi-system&lt;/artifactId&gt;</code>。
+直接后果：<code>SecurityUtils</code> 位于 <span class="path">ruoyi-framework/.../security/SecurityUtils.java</span>，
+而业务 Service 在 system 模块（不依赖 framework），<strong>取当前用户只能用 <code>SecurityContextHolder</code>，不能用 <code>SecurityUtils</code></strong>。
+</div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section id="s4">
+<h2><span class="num">4</span>模块划分与目录职责</h2>
+
+<h3>4.1 Maven 模块</h3>
+<table>
+  <tr><th>模块</th><th>Java 文件</th><th>职责</th><th>关键内容</th></tr>
+  <tr><td><strong>ruoyi-admin</strong></td><td>17</td><td>启动模块 + 全部 Web 入口</td><td><code>RuoYiMedicalApplication</code>、13 个 Controller、<code>DispenseRequest</code>、<code>application.yml</code></td></tr>
+  <tr><td><strong>ruoyi-system</strong></td><td>65</td><td>业务领域核心</td><td>18 个 Medical* 实体、19 个 Mapper、10 个 Service、<code>AiHttpUtil</code></td></tr>
+  <tr><td><strong>ruoyi-common</strong></td><td>16</td><td>公共契约与工具</td><td>AjaxResult / BaseEntity / TableDataInfo / RedisCache / ServiceException / ExcelUtil / AllergyChecker</td></tr>
+  <tr><td><strong>ruoyi-framework</strong></td><td>12</td><td>安全与配置</td><td>SecurityConfig / JwtAuthenticationTokenFilter / TokenService / SysLoginService / GlobalExceptionHandler / RedisConfig / CorsConfig / MyBatisConfig</td></tr>
+  <tr><td><strong>ruoyi-quartz</strong></td><td>20</td><td>定时任务</td><td>SysJob CRUD + <code>MedicalRemindTask</code>（低库存扫描推站内信）+ <code>FollowupRemindTask</code></td></tr>
+  <tr><td><strong>ruoyi-generator</strong></td><td>11</td><td>代码生成（Velocity 模板）</td><td>保留能力，当前业务代码非其产出</td></tr>
+</table>
+
+<h3>4.2 前端目录</h3>
+<table>
+  <tr><th>目录</th><th>内容</th></tr>
+  <tr><td><span class="path">src/api/</span></td><td><code>login.js</code> + <code>monitor/job.js</code> + <code>medical/</code> 下 11 个接口文件（patient/diagnosis/drug/followup/message/price/schedule/registration/prescription/statistics/ai）</td></tr>
+  <tr><td><span class="path">src/router/index.js</span></td><td>静态路由，<code>/medical</code> 父路由下 16 个子路由</td></tr>
+  <tr><td><span class="path">src/views/medical/</span></td><td>11 个业务页 + <code>ai/</code> 5 页（chat / knowledge / record / risk / xray）</td></tr>
+  <tr><td><span class="path">src/plugins/</span></td><td>index（全局注册）、modal、tab</td></tr>
+  <tr><td><span class="path">src/components/</span></td><td><strong>仅 3 个</strong>：Breadcrumb、Hamburger、Pagination</td></tr>
+  <tr><td><span class="path">src/directive/</span></td><td>permission.js（v-hasPermi / v-hasRole，全放行）</td></tr>
+  <tr><td><span class="path">src/utils/</span></td><td>request.js（axios 封装 + download）、auth.js、index.js</td></tr>
+  <tr><td><span class="path">src/store/</span>、<span class="path">src/layout/</span></td><td>Vuex（user / settings / app）、侧边栏与布局</td></tr>
+</table>
+
+<h3>4.3 根目录非源码内容</h3>
+<table>
+  <tr><th>路径</th><th>说明</th><th>是否入库</th></tr>
+  <tr><td><span class="path">sql/</span></td><td>14 个 SQL：ry_20231130（若依基线）→ medical_schema → medical_followup → medical_message → quartz → medical_menu → medical_price → medical_clinic，另有 medical_ai / medical_ai_menu / 药品菜单 / patch_v2 / patch_v3</td><td>入库</td></tr>
+  <tr><td><span class="path">doc/</span></td><td>13 份文档（需求、接口、部署、测试记录、演示清单、两份 docx）</td><td>入库</td></tr>
+  <tr><td><span class="path">ruoyi-ai/</span></td><td>AI 服务源码 + 脚本 + 模型 + 数据</td><td>源码入库，<strong>models/data 不入库</strong></td></tr>
+  <tr><td><span class="path">.workbuddy/</span></td><td>30+ 个一次性开发脚本（generate_code.py 85KB、build_srs.py 92KB、e2e_smoke.py、check_mapper.py 等）+ memory 笔记</td><td><strong>不入库</strong>（.gitignore 显式排除）</td></tr>
+  <tr><td><span class="path">codegen/medical_drug/</span></td><td>一份完整的药品模块代码生成产物（Controller/Domain/Mapper/Service/XML/SQL/Vue）<strong>与真实模块重复</strong></td><td>入库（易误改，见第 12 节）</td></tr>
+  <tr><td><span class="path">data/</span></td><td>AI 原始数据集：diabetes.csv、COVID-19 Radiography Database、medical-train.jsonl、chest_dataset/{train,val}</td><td><strong>不入库</strong></td></tr>
+  <tr><td><span class="path">tools/apache-maven-3.9.6/</span></td><td>随项目携带的 Maven</td><td><strong>不入库</strong>（与 .gitignore 注释矛盾，见第 12 节）</td></tr>
+  <tr><td><span class="path">*.log（7 个）</span>、<span class="path">sql_check.txt</span>、<span class="path">yml_check.txt</span></td><td>构建与排查日志</td><td>日志不入库；两个 txt <strong>入库</strong></td></tr>
+</table>
+</section>
+
+<!-- ============ 5 ============ -->
+<section id="s5">
+<h2><span class="num">5</span>核心业务流程与数据流</h2>
+
+<h3>5.1 门诊主闭环（本项目的骨架）</h3>
+<div class="flow">① 挂号  POST /medical/registration
+     ├─ 生成单号 GH+yyyyMMdd+4位随机
+     ├─ UPDATE medical_schedule SET used_num=used_num+1 WHERE ... AND used_num&lt;total_num   ← 原子占号
+     │      返回 0 行 → ServiceException("号源已满，无法挂号")
+     └─ medical_registration.reg_status = '0'（待就诊）
+
+② 开始就诊  POST /medical/registration/start-visit/{id}
+     ├─ 前置校验：reg_status 必须为 '0'；patientId / dept / doctorName 非空
+     ├─ INSERT medical_diagnosis（草稿：status='1'，diagnosis_result='待完善'，registration_id 关联）
+     └─ medical_registration.reg_status: 0 → 1（已就诊）
+
+③ 诊疗记录  /medical/diagnosis/**（CRUD + 费用汇总 fee-summary）
+     └─ 可从患者页一键触发 AI 病历生成回填（diagnosis/index.vue 的 handleAiGenerate）
+
+④ 开方  POST /medical/prescription
+     ├─ 单号 CF+yyyyMMdd+4位随机，status='0'（待发药）
+     ├─ 按患者补全 patient_name / patient_allergy
+     ├─ 按价目表自动计价：selectPriceByDrugName(drugName) 覆盖单价，total = Σ qty×price
+     ├─ 过敏校验：AllergyChecker.check(过敏史, 药品名) → allergy_warning
+     └─ INSERT medical_prescription + N 条 medical_prescription_item
+
+⑤ 发药  POST /medical/prescription/dispense
+     ├─ 5 秒防重复锁（ConcurrentHashMap，内存级）
+     ├─ 逐条校验：发药量 ≤ 未发量 → 效期未过 → UPDATE medical_drug SET stock=stock-#{qty}
+     │            WHERE drug_id=#{id} AND stock&gt;=#{qty}   ← 原子扣库存，0 行即"库存不足"
+     ├─ UPDATE medical_prescription_item SET dispensed_quantity=...
+     ├─ INSERT medical_dispensing（发药流水，status='0'）
+     └─ 重算处方状态：全发完='2' / 部分='1' / 未发='0'
+
+⑥ 退药  POST /medical/prescription/return/{id}
+     ├─ 只处理 status in (null,'0') 的发药记录（幂等）
+     ├─ UPDATE medical_drug SET stock=stock+#{qty}（回滚）
+     ├─ 发药记录 status → '1'（已退），dispensed_quantity 回退
+     └─ 处方状态恢复 '0'
+
+旁路：退号 POST /medical/registration/refund/{id}  → reg_status='2' + used_num-1 释放号源
+      作废 POST /medical/prescription/cancel/{id}  → prescription_status='3'
+      审计：开方 / 发药 / 退药 / 退号 四处写 medical_audit_log（try-catch 吞异常，不影响主流程）</div>
+
+<h4>状态机汇总</h4>
+<table>
+  <tr><th>实体</th><th>字段</th><th>取值</th></tr>
+  <tr><td>挂号</td><td><code>reg_status</code></td><td>0 待就诊 / 1 已就诊 / 2 已退号</td></tr>
+  <tr><td>处方</td><td><code>prescription_status</code></td><td>0 待发药 / 1 部分发药 / 2 已发药 / 3 已作废</td></tr>
+  <tr><td>发药流水</td><td><code>status</code></td><td>0 正常 / 1 已退</td></tr>
+  <tr><td>诊疗</td><td><code>status</code></td><td>1 草稿（start-visit 生成）</td></tr>
+  <tr><td>站内信</td><td><code>read_status</code></td><td>0 未读 / 1 已读</td></tr>
+  <tr><td>知识条目</td><td><code>synced</code></td><td>0 未同步 / 1 已入向量库</td></tr>
+</table>
+
+<h3>5.2 四条 AI 数据流</h3>
+<table>
+  <tr><th>模块</th><th>链路</th><th>降级策略</th><th>落库</th></tr>
+  <tr><td>① 病历生成</td><td>record.vue →（SSE 直连 8000）/（经 8080 非流式）→ Ollama qwen2.5:7b</td><td>健康检查失败 → <span class="path">fallback.py</span> 5 套关键词模板</td><td><code>medical_ai_record</code>（ai_content 与 doctor_content 分列留痕）</td></tr>
+  <tr><td>② 风险预测</td><td>risk.vue → 8080 → 8000 → <code>model_risk.pkl</code></td><td>无降级（模型缺失即失败）</td><td><code>medical_risk_predict</code></td></tr>
+  <tr><td>③ 胸片初筛</td><td>xray.vue → 8080 → 8000（multipart，≤10MB）→ ResNet18</td><td>无降级</td><td><code>medical_chest_xray</code>（含 probs_json 三类概率）；原图存 AI 侧 uploads</td></tr>
+  <tr><td>④ RAG 导诊</td><td>chat.vue → 8080 → 8000 → Chroma 检索 → Ollama 生成</td><td>相似度不足 → <strong>固定拒答</strong>；Ollama 挂 → 返回检索原文</td><td><strong>不落库</strong>，只转发</td></tr>
+</table>
+
+<p><strong>④ 的防幻觉设计</strong>是本项目 AI 部分最值得讲的一点：Chroma 建集合时指定 <code>hnsw:space=cosine</code>，检索后按 <code>RAG_SIM_THRESHOLD = 0.55</code> 过滤距离，<strong>过滤后为空才触发拒答</strong>，直接返回"本地知识库未检索到相关内容……建议前往医院相应科室就诊"，完全不调 LLM。证据：<span class="path">ruoyi-ai/rag.py</span>（retrieve 过滤段与 ask 拒答段）、<span class="path">ruoyi-ai/config.py:60</span>、<span class="path">scripts/build_rag_db.py</span>（建集合处）。</p>
+
+<h3>5.3 数据表关联图（逻辑外键，无物理 FK）</h3>
+<div class="flow">medical_patient ──┬─ medical_registration ── medical_schedule（占号源）
+                  │        │
+                  │        └─ medical_diagnosis（start-visit 生成草稿，registration_id 关联）
+                  │                 │
+                  │                 └─ medical_ai_record（AI 病历采纳后回填 diagnosis_id）
+                  ├─ medical_prescription ── medical_prescription_item ── medical_drug
+                  │        │                        │
+                  │        └─ medical_dispensing ───┘（发药流水 + 库存扣减/回退）
+                  ├─ medical_followup
+                  ├─ medical_risk_predict
+                  └─ medical_chest_xray
+
+独立表：medical_price_item（价目）、medical_message（站内信，related_id 软关联）
+        medical_audit_log（无外键，biz_id + biz_no 软关联各业务单）
+        medical_rag_knowledge（知识库，synced 标记同步状态）</div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section id="s6">
+<h2><span class="num">6</span>程序入口与关键调用链</h2>
+
+<h3>6.1 四个入口</h3>
+<table>
+  <tr><th>进程</th><th>入口文件</th><th>要点</th></tr>
+  <tr><td>后端</td><td><span class="path">ruoyi-admin/src/main/java/com/ruoyi/RuoYiMedicalApplication.java</span></td><td><code>@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)</code>，由 Druid starter 自己建数据源。main 里纯 <code>System.out</code> 打印横幅（含 AI 文档地址）</td></tr>
+  <tr><td>前端</td><td><span class="path">ruoyi-ui/src/main.js</span>（19 行）</td><td><code>Vue.use(ElementUI)</code> → <code>import './plugins/index'</code>（全局方法在此挂载）→ <code>import './permission'</code>（路由守卫）</td></tr>
+  <tr><td>AI</td><td><span class="path">ruoyi-ai/main.py</span></td><td><code>app = FastAPI()</code>；挂载 <code>/ai-uploads</code> 静态目录；CORS 全开；<code>@app.on_event("startup")</code> 起 daemon 线程预热 Ollama；<code>uvicorn.run(app, 127.0.0.1, 8000)</code></td></tr>
+  <tr><td>一键启动</td><td><span class="path">start.bat</span></td><td>6 步：MySQL → Memurai → 后端 jar（无 jar 则先 mvnw 构建）→ 前端 dev → AI uvicorn → Ollama serve</td></tr>
+</table>
+
+<h3>6.2 登录鉴权调用链（完整）</h3>
+<div class="flow">POST /login
+  → SysLoginController.login()  [ruoyi-admin]
+  → SysLoginService.login()     [framework/web/service]
+      ├─ authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(...))
+      │     └─ UserDetailsServiceImpl.loadUserByUsername() → 查 sys_user
+      │           ├─ status='1' 停用 → 抛异常
+      │           ├─ delFlag='2' 已删除 → 抛异常
+      │           └─ 角色含 admin → 权限直接给 *:*:*
+      ├─ 密码校验：BCryptPasswordEncoder（SecurityConfig L42）
+      ├─ token = UUID 去横线（SysLoginService L58）
+      └─ TokenService.setLoginUser() → Redis key = "login_tokens:" + token，TTL 30 分钟
+  → 返回 {"token": "..."}  存入 Cookie（js-cookie）
+
+后续每个请求：
+  JwtAuthenticationTokenFilter（OncePerRequestFilter，注册在 UsernamePasswordAuthenticationFilter 之前）
+    ├─ 从 "token" 头或 "Authorization: Bearer xxx" 取 token（L61-77）
+    ├─ TokenService.getLoginUser(token) → Redis
+    ├─ refreshToken（每次请求续期）
+    └─ 写入 SecurityContextHolder
+  SecurityConfig：仅放行 /login /logout /captchaImage /error /favicon.ico，
+                  其余 .anyRequest().authenticated()</div>
+<p class="path">SecurityConfig.java:68-76（放行清单与 anyRequest）、JwtAuthenticationTokenFilter.java:61-77（取 token）</p>
+
+<h3>6.3 AI 调用链（Java → Python）</h3>
+<div class="flow">MedicalAiController（/medical/ai/**，18 个端点）
+  → MedicalAiServiceImpl（ruoyi-system）
+      → AiHttpUtil（ruoyi-system/.../utils/AiHttpUtil.java）
+          ├─ @Value("${ai.service.url:http://127.0.0.1:8000}")，apiPrefix = base + "/api/ai"
+          ├─ connectTimeout 5000 / readTimeout 130000
+          └─ 映射：generate_record / risk_predict / chest_xray(multipart) / rag_chat
+                   / rag/add / delete_upload / health
+      → 校验 Python 信封 code == 200（否则抛 AiServiceException）
+      → 结果落库，把自增 ID 回填进响应（record_id / predict_id / xray_id）
+  → Controller catch (AiServiceException) → AjaxResult.error(e.getMessage())</div>
+<p><strong>两处设计细节</strong>：① 风险特征顺序不是调 <code>/risk_features</code>，而是复用 <code>/health</code> 响应里的 <code>data.risk.features</code>（<span class="path">MedicalAiServiceImpl.java</span> riskFeatures 方法）；② 删除胸片记录时，先删库再从 <code>img_url</code> 截文件名调 <code>deleteUpload</code> 清理 AI 侧物理文件。</p>
+
+<h3>6.4 前端请求解包约定（最容易踩坑的一处）</h3>
+<p><span class="path">ruoyi-ui/src/utils/request.js</span> 的响应拦截器返回的是 <strong><code>res.data</code>（整个 AjaxResult 体）</strong>，不是 <code>res.data.data</code>。因此：</p>
+<ul>
+  <li>列表接口 → 用 <code>res.rows</code> / <code>res.total</code>（TableDataInfo 顶层字段）</li>
+  <li>单对象接口 → 用 <code>res.data</code>（AjaxResult 的 data 字段）</li>
+  <li><strong>AI 接口例外</strong>：Java 转发时未拆 FastAPI 自己的 <code>{code,msg,data}</code> 信封，导致双层包装，必须过 <code>unwrapAi()</code> 逐层剥离（最多 3 层）。<span class="path">src/api/medical/ai.js</span> 顶部注释已明确说明</li>
+</ul>
+</section>
+
+<!-- ============ 7 ============ -->
+<section id="s7">
+<h2><span class="num">7</span>模块依赖关系</h2>
+
+<div class="flow">ruoyi-admin
+   ├── ruoyi-system ────── ruoyi-common
+   ├── ruoyi-framework ─── ruoyi-system ── ruoyi-common      ← 注意方向反了
+   ├── ruoyi-generator ─── ruoyi-framework + ruoyi-system + ruoyi-common
+   ├── ruoyi-quartz ────── ruoyi-system + ruoyi-common
+   └── druid-spring-boot-starter / mysql-connector-j / spring-boot-starter
+
+ruoyi-common 自身依赖：spring-boot-starter-web、security、data-redis、validation、
+                       lombok、jackson、commons-lang3、fastjson、easyexcel、pagehelper</div>
+
+<table>
+  <tr><th>模块</th><th>直接依赖（内部）</th><th>外部关键依赖</th></tr>
+  <tr><td>ruoyi-admin</td><td>system、framework、generator、quartz</td><td>druid、mysql、spring-boot-starter</td></tr>
+  <tr><td>ruoyi-framework</td><td>common、<strong>system</strong></td><td>security、aop、mybatis、pagehelper、redis</td></tr>
+  <tr><td>ruoyi-system</td><td>common</td><td>mybatis、spring-boot-starter-test</td></tr>
+  <tr><td>ruoyi-quartz</td><td>common、system</td><td>spring-boot-starter-quartz</td></tr>
+  <tr><td>ruoyi-generator</td><td>common、framework、system</td><td>velocity、commons-io</td></tr>
+  <tr><td>ruoyi-common</td><td>—</td><td>web、security、redis、validation、lombok、jackson、fastjson、easyexcel、pagehelper</td></tr>
+</table>
+<p>证据：各模块 <span class="path">pom.xml</span> 的 <code>&lt;dependencies&gt;</code> 段。跨进程的 <code>ruoyi-ai</code> 与 Java 侧<strong>零编译期耦合</strong>，仅通过 HTTP + <code>ai.service.url</code> 配置项耦合。</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section id="s8">
+<h2><span class="num">8</span>已实现功能清单</h2>
+
+<h3>8.1 业务功能（11 个菜单）</h3>
+<table>
+  <tr><th>功能</th><th>路由</th><th>后端端点前缀</th><th>关键能力</th></tr>
+  <tr><td>患者管理</td><td>/medical/patient</td><td>/medical/patient</td><td>CRUD、身份证唯一校验（<code>checkIdCardUnique</code> 返回 "0"/"1"）、身份证/手机号 <code>@Pattern</code>、脱敏展示、诊疗/随访历史弹窗、一键跳风险预测</td></tr>
+  <tr><td>号源排班</td><td>/medical/schedule</td><td>/medical/schedule</td><td>纯 CRUD，total_num / used_num 号源字段</td></tr>
+  <tr><td>挂号管理</td><td>/medical/registration</td><td>/medical/registration</td><td>占号源、退号、<strong>开始就诊</strong>（生成诊疗草稿）</td></tr>
+  <tr><td>诊疗记录</td><td>/medical/diagnosis</td><td>/medical/diagnosis</td><td>CRUD、按患者查、<code>fee-summary</code> 费用汇总、AI 生成病历回填</td></tr>
+  <tr><td>药品管理</td><td>/medical/drug</td><td>/medical/drug</td><td>CRUD、<code>low-stock</code>（默认阈值 10）、<code>near-expiry</code>（默认 90 天）</td></tr>
+  <tr><td>处方发药</td><td>/medical/prescription</td><td>/medical/prescription</td><td>开方/发药/退药/作废/明细查询，自动计价 + 过敏校验 + 效期校验 + 库存原子扣减</td></tr>
+  <tr><td>随访管理</td><td>/medical/followup</td><td>/medical/followup</td><td>CRUD、按患者查、过期行高亮</td></tr>
+  <tr><td>站内信</td><td>/medical/message</td><td>/medical/message</td><td>列表/已读/全部已读/未读数/最新 5 条（注意 <code>receiver</code> 存<strong>登录用户名</strong>非姓名）</td></tr>
+  <tr><td>费用价目</td><td>/medical/price</td><td>/medical/price</td><td>CRUD，<code>selectPriceByDrugName</code> 供开方自动计价</td></tr>
+  <tr><td>统计看板</td><td>/medical/statistics</td><td>/medical/statistics/dashboard</td><td>13 项聚合指标，JVM 内存缓存 1 小时，<code>refresh=true</code> 强制重算</td></tr>
+  <tr><td>审计日志</td><td>（无菜单）</td><td>/medical/audit</td><td>只读；<code>/list</code> 分页、<code>/count</code></td></tr>
+  <tr><td>定时任务</td><td>/monitor/job</td><td>/monitor/job</td><td>Quartz CRUD + 执行 + 日志；含 <code>medicalRemindTask.scanLowStock</code>（低库存扫描推站内信，默认阈值 10）</td></tr>
+</table>
+
+<h3>8.2 AI 功能（4 模块 5 页面）</h3>
+<table>
+  <tr><th>模块</th><th>前端页</th><th>模型 / 引擎</th><th>实测指标</th></tr>
+  <tr><td>智能病历书写</td><td>ai/record.vue</td><td>Ollama <code>qwen2.5:7b-instruct-q4_K_M</code></td><td>真实生成约 40–52 秒；Ollama 不可用降级模板草稿</td></tr>
+  <tr><td>疾病风险预测</td><td>ai/risk.vue</td><td><code>models/model_risk.pkl</code>（Pima 糖尿病，8 特征）</td><td>accuracy 0.7078 / AUC 0.813（记录在 <span class="path">models/risk_features.json</span>）</td></tr>
+  <tr><td>胸片智能初筛</td><td>ai/xray.vue</td><td><code>models/chest_cnn.pth</code>（ResNet18）</td><td>三分类；优化少数类后 macro-F1 0.9428 / val_acc ≈0.9416，COVID-19 召回 1.000、precision ≈0.83</td></tr>
+  <tr><td>RAG 智能导诊</td><td>ai/chat.vue + ai/knowledge.vue</td><td>Chroma + 本地 MiniLM embedding + Ollama</td><td>知识库 10 条；阈值 0.55 拒答防幻觉</td></tr>
+</table>
+
+<h3>8.3 基础设施与安全</h3>
+<ul>
+  <li>登录 / 登出 / getInfo、BCrypt 密码、JWT token + Redis 会话（30 分钟）、跨域配置、全局异常处理</li>
+  <li>Excel 导出（患者/诊疗/药品/随访/费用报表），<code>download()</code> 走 POST 表单，后端 <code>/export</code> 同时支持 GET/POST</li>
+  <li>审计留痕：开方 / 发药 / 退药 / 退号 四处写 <code>medical_audit_log</code></li>
+  <li>定时任务：低库存扫描推送站内信（带未读去重）</li>
+  <li>体检脚本（<span class="path">.workbuddy/</span>）：<code>check_mapper.py</code>（Mapper↔XML 对应）、<code>check_schema.py</code>（表↔实体）、<code>check_vue.py</code>（Vue 方法/refs 定义）、<code>e2e_smoke.py</code>（HTTP 主链路）、<code>concurrency_test.py</code>（并发）、<code>apply_patch.py</code>（SQL 补丁）</li>
+</ul>
+</section>
+
+<!-- ============ 9 ============ -->
+<section id="s9">
+<h2><span class="num">9</span>外部依赖与对外接口</h2>
+
+<h3>9.1 外部服务依赖</h3>
+<table>
+  <tr><th>依赖</th><th>必要性</th><th>缺失后果</th></tr>
+  <tr><td>MySQL 8（<code>ruoyi_medical</code>）</td><td>强依赖</td><td>应用无法启动</td></tr>
+  <tr><td>Redis / Memurai 6379</td><td>强依赖（鉴权）</td><td>应用能启动，但登录必失败（<span class="path">RedisCache</span> 的 token 三方法不降级）</td></tr>
+  <tr><td>AI FastAPI 8000</td><td>弱依赖</td><td>业务功能正常，AI 端点报 <code>AiServiceException</code></td></tr>
+  <tr><td>Ollama 11434</td><td>弱依赖</td><td>病历生成与 RAG 降级（模板 / 仅检索），胸片与风险预测不受影响</td></tr>
+</table>
+
+<h3>9.2 对外接口面</h3>
+<p><strong>后端对外</strong>（8080，共 83 个端点）：</p>
+<ul>
+  <li><code>/login</code>、<code>/logout</code>、<code>/getInfo</code>（无业务前缀，前端 proxy 单独转发）</li>
+  <li><code>/medical/patient|diagnosis|drug|followup|message|price|schedule|registration|prescription|statistics|audit</code></li>
+  <li><code>/medical/ai/**</code> 18 个端点（health、generateRecord、riskPredict、riskFeatures、chestXray、ragChat、ragAddDocs，以及 record/risk/xray/knowledge 四组历史 CRUD 与 knowledge/sync）</li>
+  <li><code>/monitor/job/**</code>（Quartz）</li>
+</ul>
+<p><strong>AI 服务对外</strong>（8000）：9 个业务路由 + FastAPI 自动生成的 <code>/docs</code>、<code>/openapi.json</code>、<code>/redoc</code> + 静态 <code>/ai-uploads</code>。</p>
+<pre><span class="cm"># ruoyi-ai/main.py 注册的路由</span>
+POST /api/ai/generate_record          非流式病历生成（带降级）
+POST /api/ai/generate_record_stream   SSE 流式（前端直连，不走 Java）
+GET  /api/ai/health                   四模块就绪状态汇总
+POST /api/ai/risk_predict             风险预测
+POST /api/ai/chest_xray               胸片上传 + 分类，返回 img_url
+POST /api/ai/rag_chat                 RAG 问答（支持 session_id 多轮）
+POST /api/ai/rag/add                  运行期追加知识
+GET  /api/ai/risk_features            特征顺序
+POST /api/ai/delete_upload            删除物理图片（含目录穿越校验）</pre>
+<div class="callout">
+<strong>能力未被完全打通的两处：</strong>① Java 侧 <code>ragChat</code> 请求体只有 <code>question</code> 和 <code>top_k</code>，<strong>不传 <code>session_id</code></strong>，Python 的多轮会话能力在"经后端"链路上不生效（前端 SSE 直连链路才可能用上）；② Java 侧不调 <code>/generate_record_stream</code>，流式生成的内容由前端拿到后调 <code>/medical/ai/record/save</code> 落库。
+</div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section id="s10">
+<h2><span class="num">10</span>关键实现细节</h2>
+
+<h3>10.1 并发安全的两条原子 SQL（项目的核心正确性保障）</h3>
+<pre><span class="cm">-- ruoyi-system/src/main/resources/mapper/MedicalDrugMapper.xml（库存扣减，0 行 = 库存不足）</span>
+UPDATE medical_drug SET stock = stock - #{quantity}
+ WHERE drug_id = #{drugId} AND stock &gt;= #{quantity}
+
+<span class="cm">-- MedicalScheduleMapper.xml（号源占用，0 行 = 号源已满）</span>
+UPDATE medical_schedule SET used_num = used_num + 1
+ WHERE schedule_id = #{scheduleId} AND used_num &lt; total_num
+
+<span class="cm">-- 对称的回退语句</span>
+UPDATE medical_drug     SET stock    = stock    + #{quantity} WHERE drug_id     = #{drugId}
+UPDATE medical_schedule SET used_num = used_num - 1
+ WHERE schedule_id = #{scheduleId} AND used_num &gt; 0
+
+<span class="cm">-- MedicalMessageMapper.xml（已读标记，条件带 read_status='0'，天然幂等）</span>
+UPDATE medical_message SET read_status = '1'
+ WHERE receiver = #{receiver} AND read_status = '0'</pre>
+<p>把"判断 + 扣减"压进一条 SQL 的 WHERE 条件里，用影响行数代替"先 SELECT 再 UPDATE"，是本并发量级下最经济的做法。Service 侧只需判断 <code>rows == 0</code> 抛 <code>ServiceException</code>。</p>
+
+<h3>10.2 幂等与防重设计</h3>
+<ul>
+  <li><strong>发药 5 秒防重</strong>：<code>MedicalPrescriptionServiceImpl</code> 里 <code>ConcurrentHashMap&lt;String, Long&gt; dispensingLocks</code>，同一处方 5 秒内二次发药抛"操作过于频繁"。</li>
+  <li><strong>退药幂等</strong>：只处理 <code>status == null || "0"</code> 的发药记录，已退的不会被二次回滚。</li>
+  <li><strong>知识库同步幂等</strong>：只查 <code>synced = '0' or synced is null</code>，同步后 <code>markSynced</code>；且 <code>insert/update</code> 时强制 <code>setSynced("0")</code>，正文变更必然重新入库。</li>
+  <li><strong>站内信去重</strong>：<code>existsUnreadByTypeAndRelated(type, relatedId, receiver)</code> 命中则不重复推送。</li>
+  <li><strong>身份证唯一校验</strong>：SQL 里带 <code>and id_card != ''</code> 与 <code>patient_id != #{patientId}</code>，且 Service 中空证件号直接返回 "0"（允许无证件患者）。</li>
+</ul>
+
+<h3>10.3 审计的"不阻塞主流程"设计</h3>
+<p><code>MedicalRegistrationServiceImpl</code> / <code>MedicalPrescriptionServiceImpl</code> 中的私有 <code>audit(...)</code> 方法整体包在 try-catch 里吞掉异常；操作人从 <code>SecurityContextHolder</code> 取，取不到回落 <code>"system"</code>。即<strong>审计写失败不会让挂号/发药回滚</strong>——这是有意的取舍。</p>
+
+<h3>10.4 两级降级：Redis 与 Ollama</h3>
+<table>
+  <tr><th>层</th><th>策略</th><th>位置</th></tr>
+  <tr><td>Redis 业务缓存</td><td><code>safe(Supplier, fallback)</code> 包装，Redis 挂了返回兜底值并打一次 WARN</td><td><span class="path">RedisCache.java:48-87</span></td></tr>
+  <tr><td>Redis 鉴权会话</td><td><strong>不降级</strong>，走裸 redisTemplate，异常上抛（注释明确说明）</td><td><span class="path">RedisCache.java:226-239</span></td></tr>
+  <tr><td>Ollama 非流式</td><td>健康检查失败 → <code>build_fallback_record()</code> 5 套关键词模板，仍返 200 但 <code>engine="template", degraded=true</code></td><td><span class="path">main.py:163-179</span>、<span class="path">fallback.py</span></td></tr>
+  <tr><td>Ollama 流式</td><td>生成前健康检查失败 → 发模板 delta/done 帧</td><td><span class="path">main.py:93-109</span></td></tr>
+  <tr><td>RAG</td><td>相似度不足 → 固定拒答；Ollama 挂 → 返回检索原文（<code>engine="rag-retrieve-only"</code>）</td><td><span class="path">rag.py</span></td></tr>
+</table>
+
+<h3>10.5 全局挂载与前端约定</h3>
+<p><span class="path">src/plugins/index.js</span>（24 行）全局注册：<code>Pagination</code> 组件、<code>v-hasPermi</code>/<code>v-hasRole</code> 指令、<code>$modal</code>、<code>$tab</code>、<code>download</code>、<code>resetForm</code>、<code>addDateRange</code>、<code>parseTime</code>。</p>
+<div class="callout warn">
+因为 <code>resetForm</code> 被挂到 <code>Vue.prototype</code>，<strong>任何页面的 methods 里都不能再定义同名方法</strong>，否则遮蔽全局方法导致无限递归。项目已遵守：<span class="path">ai/record.vue</span> 里显式注释"方法名不能叫 resetForm"，实际命名为 <code>handleReset</code>。
+</div>
+
+<h3>10.6 测试现状</h3>
+<p>6 个单元测试，共 589 行，<strong>纯 Mockito（<code>@ExtendWith(MockitoExtension.class)</code>），不启动 Spring 容器、不连数据库</strong>：</p>
+<ul>
+  <li><span class="path">ruoyi-admin/src/test/</span>：<code>DrugControllerTest</code>（144 行）、<code>StatisticsControllerTest</code>（64 行）</li>
+  <li><span class="path">ruoyi-system/src/test/</span>：<code>MedicalDiagnosisServiceImplTest</code>、<code>MedicalDrugServiceImplTest</code>、<code>MedicalPatientServiceImplTest</code>、<code>MedicalStatisticsServiceImplTest</code></li>
+</ul>
+<p><strong>覆盖缺口</strong>：最复杂的 <code>MedicalRegistrationServiceImpl</code>（占号源 + 状态机）与 <code>MedicalPrescriptionServiceImpl</code>（计价 + 发药 + 退药）以及 AI Service <strong>没有单元测试</strong>。构建时可用 <code>-DskipTests</code> 跳过。</p>
+</section>
+
+<!-- ============ 11 ============ -->
+<section id="s11">
+<h2><span class="num">11</span>潜在问题与改进点</h2>
+
+<h3>P0 · 会直接导致功能失败</h3>
+
+<h4><span class="tag t-p0">P0-1</span>401 处理抛 ReferenceError，登录失效后无法跳转</h4>
+<p><span class="path">ruoyi-ui/src/utils/request.js</span> 第 3 行只 <code>import { getToken }</code>，但第 37 行调用了 <code>removeToken()</code>——<strong>未导入</strong>。token 过期时会先弹错误提示，然后抛 <code>ReferenceError: removeToken is not defined</code>，后续的 <code>location.href='/login'</code> 与 <code>Promise.reject</code> 都不会执行，用户会卡在"点了没反应"的状态。</p>
+<pre>// request.js:3
+import { getToken } from '@/utils/auth'      <span class="cm">// ← 只有 getToken</span>
+// request.js:35-42
+} else if (code === 401) {
+  Message.error('认证失败，请重新登录')
+  removeToken()                              <span class="cm">// ← 未定义！</span>
+  if (location.href.indexOf('/login') === -1) { location.href = '/login' }
+  return Promise.reject('认证失败')
+}</pre>
+<p><strong>修法</strong>：把第 3 行改成 <code>import { getToken, removeToken } from '@/utils/auth'</code>。<span class="path">src/utils/auth.js</span> 确实导出了 <code>removeToken</code>。</p>
+
+<h4><span class="tag t-p0">P0-2</span>五个导出功能的 URL 缺前导斜杠</h4>
+<p>导出写成相对路径，与 proxy 规则 <code>/medical</code> 不匹配：</p>
+<pre>// patient/index.vue:440      this.download('medical/patient/export',   {...})
+// diagnosis/index.vue:399    this.download('medical/diagnosis/export', {...})
+// feeReport/index.vue:173    this.download('medical/diagnosis/export', {...})
+// drug/index.vue:487         this.download('medical/drug/export',      {...})
+// followup/index.vue:351     this.download('medical/followup/export',  {...})</pre>
+<p>而 <span class="path">monitor/job/index.vue:334</span> 写的是 <code>'/monitor/job/export'</code>（带斜杠，正确）。dev 环境下相对 URL 会拼成 <code>http://localhost:8081/medical/...</code>，被 devServer 的 history fallback 吃掉返回 index.html，导出静默失败。<strong>修法</strong>：五处补前导 <code>/</code>。</p>
+
+<h4><span class="tag t-p0">P0-3</span><code>@Validated @RequestBody</code> 的校验错误被吞成"系统繁忙"</h4>
+<p><span class="path">ruoyi-framework/.../web/exception/GlobalExceptionHandler.java</span> 处理了 <code>ServiceException</code>、<code>BindException</code>、<code>RuntimeException</code>、<code>Exception</code>，<strong>但没有 <code>MethodArgumentNotValidException</code></strong>。而 <code>@Validated @RequestBody</code> 触发的正是它（患者身份证/手机号 <code>@Pattern</code> 走的这条路），会落到最外层 <code>Exception</code> 分支返回"系统繁忙，请稍后重试"，前端拿不到具体哪个字段不合法。<br>
+<strong>修法</strong>：新增一个 handler，取 <code>e.getBindingResult().getFieldErrors()</code> 拼首个 message 返回。</p>
+
+<h4><span class="tag t-p0">P0-4</span>数据库密码明文入库</h4>
+<p><span class="path">application.yml:19</span> <code>password: "&lt;已脱敏&gt;"</code> 曾以明文写在配置里，未进入 Git 历史（已用 <code>git log -S</code> 核实）。<strong>改进</strong>：改用环境变量 <code>${DB_PASSWORD}</code> 或外部配置；若仓库要公开，至少 rotation 一次密码。同类问题：Redis 无密码（<code>password:</code> 留空），FastAPI 与后端 CORS 均 <code>allow_origins=*</code> + <code>allow_credentials=true</code>（演示可接受，生产需收紧）。</p>
+
+<h3>P1 · 正确性风险与一致性债务</h3>
+
+<h4><span class="tag t-p1">P1-1</span>低库存阈值三处口径不一致</h4>
+<table>
+  <tr><th>位置</th><th>阈值</th></tr>
+  <tr><td><span class="path">MedicalStatisticsServiceImpl.java:45</span></td><td><strong>硬编码 50</strong></td></tr>
+  <tr><td><span class="path">DrugController.java</span> <code>/low-stock</code> 默认值</td><td>10</td></tr>
+  <tr><td><span class="path">MedicalRemindTask.scanLowStock</span></td><td>10（可由参数覆盖）</td></tr>
+</table>
+<p>统计看板上的"库存预警数"与药品页预警列表数量会对不上。<strong>建议</strong>：抽成一个配置常量（<code>medical.lowStockThreshold</code>），三处统一引用。</p>
+
+<h4><span class="tag t-p1">P1-2</span>统计缓存用 JVM 静态 Map，且 dashboard 与 README 口径不符</h4>
+<p><code>MedicalStatisticsServiceImpl</code> 用 <code>static Map cache</code> + <code>static AtomicLong cacheTs</code>，TTL 1 小时。问题：多实例部署时各实例缓存不一致；类卸载/热部署会丢；且缓存不是 Redis，与项目"Redis 只存 token"的现状一致但没在文档里说明。<br>
+另外 <strong>README 说"4 项核心指标"，接口实际返回 13 项</strong>（patientTotal / diagnosisTotal / drugTotal / registrationTotal / prescriptionTotal / dispensingTotalQty / lowStockCount / byDepartment / byCategory / costByDepartment / costTrend / genderStats / ageStats）——文档已过时。</p>
+
+<h4><span class="tag t-p1">P1-3</span><code>/medical/audit/count</code> 全表查询</h4>
+<p><span class="path">MedicalAuditLogController.java</span> 的 <code>/count</code> 实现是 <code>selectMedicalAuditLogList(new MedicalAuditLog()).size()</code>——<strong>先全表捞出 List 再取 size</strong>，没有分页也没有 <code>count(*)</code>。审计表是增长最快的表之一，数据量大后会拖垮内存。<strong>修法</strong>：加 <code>selectCount(...)</code> 走 <code>COUNT(1)</code>。</p>
+
+<h4><span class="tag t-p1">P1-4</span>诊疗主键用 <code>max(id)+1</code>，非原子</h4>
+<p><span class="path">MedicalDiagnosisServiceImpl.insertMedicalDiagnosis</span>：<code>if (diagnosisId == null) setDiagnosisId(selectNextDiagnosisId())</code>，而 <code>selectNextDiagnosisId()</code> 是 <code>select ifnull(max(diagnosis_id),0)+1</code>。并发插入两条会得到相同 ID。<strong>修法</strong>：改成表自增 + <code>useGeneratedKeys</code>。</p>
+
+<h4><span class="tag t-p1">P1-5</span>发药防重锁是单机内存锁</h4>
+<p><code>ConcurrentHashMap dispensingLocks</code> 只在单 JVM 内有效，多实例部署失效；且 Map 只增不删（键是处方号），长时间运行会缓慢增长。<strong>建议</strong>：改用 Redis <code>SET NX EX 5</code>，或给 Map 加定期清理。</p>
+
+<h4><span class="tag t-p1">P1-6</span>前端若干未闭环的实现</h4>
+<ul>
+  <li><span class="path">src/permission.js</span>：<code>GetInfo</code> 的 <code>.catch</code> 分支<strong>没有调用 <code>next()</code></strong>，导航会停在 pending，仅靠 request.js 的 401 整页跳转兜底——而该兜底正被 P0-1 打断</li>
+  <li><span class="path">src/plugins/tab.js</span>：<code>refreshPage</code> 依赖 <code>/redirect</code> 路由，<span class="path">router/index.js</span> 中<strong>不存在该路由</strong>，会落进 <code>*</code> → <code>/404</code></li>
+  <li><span class="path">ai/risk.vue</span>：<code>loadFeatures()</code> 用 <code>names.indexOf('age')</code>（小写），而 <code>FEATURE_META</code> 键是 <code>Age</code>（大写）→ 从患者页带入的年龄不会自动预填</li>
+  <li><span class="path">ai.js</span>：<code>AI_BASE</code> 硬编码回落 <code>http://127.0.0.1:8000</code>，生产部署需设 <code>VUE_APP_AI_BASE</code>；且 SSE 直连不带 <code>Authorization</code> 头</li>
+  <li>el-dialog 懒渲染防御只在 4 个页面做（ai/knowledge、prescription、registration、schedule），<strong>patient / diagnosis / drug / followup / price 未做</strong>，首帧提交可能 <code>this.$refs.form undefined</code></li>
+</ul>
+
+<h4><span class="tag t-p1">P1-7</span>文档与代码已漂移</h4>
+<table>
+  <tr><th>文档说法</th><th>代码实际</th></tr>
+  <tr><td>README：胸片 val_acc ≈ 0.962</td><td>优化少数类后 ≈ 0.9416（macro-F1 0.9428）</td></tr>
+  <tr><td>README：运营看板 4 项核心指标</td><td>接口返回 13 项</td></tr>
+  <tr><td>README：知识库 18 条</td><td>建库脚本内置 10 条（<span class="path">scripts/build_rag_db.py</span>）</td></tr>
+  <tr><td>README：Python 3.13</td><td>venv 实为 3.13.14（一致，但路径写在 <span class="path">start.bat:10</span>，换机器必改）</td></tr>
+</table>
+
+<h3>P2 · 工程规范与可维护性</h3>
+<ul>
+  <li><span class="tag t-p2">P2-1</span><strong>根目录 clutter</strong>：7 个 <code>build*.log</code>、<code>sql_check.txt</code>、<code>yml_check.txt</code>、<code>mvn_ver.log</code>、<code>frontend-build.log</code>。前两类被 .gitignore 排除，但两个 txt 已入库——建议删除。</li>
+  <li><span class="tag t-p2">P2-2</span><strong>无 Swagger/Knife4j</strong>：后端没有接口文档依赖，13 个 Controller / 83 个端点全靠 <span class="path">doc/接口文档.md</span> 手工维护，漂移是必然的（P1-7 已出现）。建议引入 springdoc-openapi 自动生成，或至少把接口文档纳入"改代码必改文档"的检查清单。</li>
+  <li><span class="tag t-p2">P2-3</span><strong>测试覆盖偏向简单模块</strong>：6 个测试覆盖了 Drug / Diagnosis / Patient / Statistics，但最复杂的 Registration（占号源+状态机）与 Prescription（计价+发药+退药）以及 AI Service 无测试。建议优先补这两个。</li>
+  <li><span class="tag t-p2">P2-4</span><strong>双 Excel 实现并存</strong>：<span class="path">ruoyi-common/pom.xml</span> 有 easyexcel 依赖，但代码用的是自写 <span class="path">common/utils/poi/ExcelUtil.java</span>（Apache POI 风格）。建议确认哪条在用，移除另一条。</li>
+  <li><span class="tag t-p2">P2-5</span><strong>无容器化 / CI</strong>：无 Dockerfile、无 docker-compose、无 CI 配置。四进程（MySQL/Redis/后端/AI）+ Ollama 的启动依赖目前只由 <span class="path">start.bat</span> 承载，换机器成本高。</li>
+  <li><span class="tag t-p2">P2-6</span><strong>已知边界未闭环</strong>：RBAC 只到菜单级（<code>v-hasPermi</code> 恒 true）、验证码未启用、胸片 COVID-19 precision ≈0.83 偏激进（可通过关掉加权 loss、只保留过采样来平衡）。这些在 README"已知边界"中已声明，但 <code>v-hasPermi</code> 恒 true 的实现方式意味着<strong>未来接真权限时需要改前端指令而非只改后端</strong>。</li>
+</ul>
+</section>
+
+<!-- ============ 12 ============ -->
+<section id="s12">
+<h2><span class="num">12</span>遗漏 / 难以理解之处</h2>
+
+<p>以下几处我在扫描中<strong>无法从代码本身推断出确定结论</strong>，需要你确认：</p>
+
+<h4>① <span class="path">codegen/medical_drug/</span> 是什么定位？</h4>
+<p>这是一份完整的药品模块代码生成产物（Controller / Domain / Mapper / Service / Impl / XML / SQL / Vue api + view），<strong>与已实现的真实药品模块几乎重复</strong>。它可能是：代码生成功能的演示样例、早期模板、或一次"生成后手工改"的遗留。目录已入库，且有独立的 <code>DrugController.java</code>（<code>com.ruoyi.controller</code> 包）——如果误改这里不会影响运行，但会污染理解。<strong>建议明确标注为样例或直接删除。</strong></p>
+
+<h4>② <span class="path">.gitignore</span> 的 Maven 规则自相矛盾</h4>
+<pre># Maven 内置工具目录：随项目携带，让新设备免下载（建议保留）
+# /tools/apache-maven-3.9.6/          <span class="cm">← 注释说"建议保留"，但被注释掉了</span>
+/tools/apache-maven-*/*.zip
+...
+# 打包随项目的 Maven 运行时（换设备重新下载即可）
+tools/                                <span class="cm">← 实际规则：整个 tools/ 被忽略</span></pre>
+<p>结果：<span class="path">tools/apache-maven-3.9.6/</span> <strong>不在仓库里</strong>，新设备 clone 后拿不到 Maven。这与注释意图相反。另外启动脚本 <span class="path">start.bat</span> 里构建走的是 <code>mvnw.cmd</code>（wrapper），不依赖 tools/，所以实际影响有限——但规则与注释应当对齐。</p>
+
+<h4>③ AI 模型资产不入库，README 未说明前置条件</h4>
+<p><span class="path">.gitignore</span> 排除了 <code>ruoyi-ai/models/</code>、<code>*.pkl</code>、<code>*.pth</code>、<code>ruoyi-ai/data/chroma_db/</code>、<code>data/</code>。这意味着新设备 clone 后<strong>四个 AI 模块全部不可用</strong>（风险预测模型 1.9KB、胸片 44.8MB、embedding 约 500MB 都得另想办法），且 <code>chest_cnn.pth</code> 需要重新训练（脚本在，数据集 <span class="path">data/</span> 也不入库）。README 的"快速开始"完全没有提这一步。建议补一节"模型资产获取"说明，或提供一个导出/导入脚本。</p>
+
+<h4>④ <span class="path">data/</span> 下三个中文目录与 <span class="path">ruoyi-ai/</span> 的关系不明</h4>
+<ul>
+  <li><span class="path">data/AI 疾病风险预测模块/diabetes.csv</span> — 应是 <code>train_risk.py</code> 的原始输入（脚本也支持自动下载）</li>
+  <li><span class="path">data/AI 胸片智能初筛模块/COVID-19 Radiography Database</span> + <code>__MACOSX</code> — 原始影像库（<strong><code>__MACOSX</code> 是 macOS 压缩包残留垃圾，可删</strong>）；已 8:2 划分到 <span class="path">data/chest_dataset/{train,val}</span></li>
+  <li><span class="path">data/RAG 智能导诊问答模块/medical-train.jsonl</span> — 用途未在 <span class="path">build_rag_db.py</span> 中看到显式引用，<strong>它是知识库的数据源还是另一条训练轨？无法确认</strong></li>
+</ul>
+<p>这些都是被 gitignore 的大文件目录，从仓库看不出全貌。</p>
+
+<h4>⑤ 两份 docx 是什么关系？</h4>
+<p><span class="path">doc/若依医疗管理系统_需求功能说明书_V1.0.docx</span> 与 <span class="path">doc/项目需求文档.docx</span> 大小完全相同（128,488 字节），但 MD5 不同（<code>38e0a87b…</code> vs <code>639e1879…</code>），说明内容有细微差异而非同一文件。哪份是交付正本需要确认；另外 <span class="path">doc/项目需求文档.md</span> 与它们的关系也不明确（<code>build_srs.py</code> 疑似是生成脚本）。</p>
+
+<h4>⑥ 工作区有 17 项未提交改动，其中包含一处删除</h4>
+<p><code>git status</code> 显示：<code>README.md</code>、<code>start.bat</code>、<code>vue.config.js</code>、7 个 Java/XML、6 个 Vue 文件被修改；<strong><code>doc/验收与近日计划_2026-09-18.md</code> 被删除</strong>；3 个新文档未跟踪。本报告基于<strong>工作区当前状态</strong>（而非 HEAD <code>a7091d7</code>）扫描，如果你要的是"已提交版本"的快照，结论会有偏差。建议先决定这批改动是提交还是丢弃。</p>
+
+<h4>⑦ 无法从代码判断的运行时状态</h4>
+<ul>
+  <li>数据库 <code>ruoyi_medical</code> 的实际表结构与 <span class="path">sql/</span> 下 14 个脚本的<strong>累计结果</strong>是否一致（脚本分基础版 + patch_v2 + patch_v3，导入顺序错了会缺列），需要连库 <code>SHOW CREATE TABLE</code> 核对</li>
+  <li><span class="path">ruoyi-ui/dist/</span> 存在（1.7MB），已构建但未入库，构建时间未知、是否与当前源码同步未知</li>
+  <li>Ollama 是否常驻、模型是否已 pull，决定了病历生成是走真实生成还是降级模板——这属于环境状态，代码里看不出来</li>
+</ul>
+</section>
+
+<footer>本报告基于 D:/若依医疗/若依医疗 全量文件扫描生成 · 所有结论均标注了文件路径，未标注行号处以文件为单位核对</footer>
+
+</div>
+</body>
+</html>

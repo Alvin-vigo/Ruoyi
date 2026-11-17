@@ -89,9 +89,25 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         </where>
     </select>
 
+    <select id="selectNextDiagnosisId" resultType="Long">
+        select ifnull(max(diagnosis_id), 0) + 1 from medical_diagnosis
+    </select>
+
+    <!--
+      当前读（locking read）取当前最大 diagnosis_id，不与 0 兜底。
+      与 selectNextDiagnosisId 的区别：本语句带 FOR UPDATE，绕过 MVCC 快照，
+      直读最新已提交版本；空表时返回 null，由调用方按 0 处理。
+      用途：配合 medical_id_allocator 行锁实现原子 ID 分配（AC-08）。
+      注意：必须在事务内调用，否则 FOR UPDATE 在 autocommit 下等同于普通读。
+    -->
+    <select id="selectMaxIdForUpdate" resultType="Long">
+        select diagnosis_id from medical_diagnosis order by diagnosis_id desc limit 1 for update
+    </select>
+
     <insert id="insertMedicalDiagnosis" parameterType="MedicalDiagnosis" useGeneratedKeys="true" keyProperty="diagnosisId">
         insert into medical_diagnosis
         <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="diagnosisId != null">diagnosis_id,</if>
             <if test="patientId != null">patient_id,</if>
             <if test="registrationId != null">registration_id,</if>
             <if test="visitDate != null">visit_date,</if>
@@ -108,6 +124,7 @@ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
             create_time
         </trim>
         <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="diagnosisId != null">#{diagnosisId},</if>
             <if test="patientId != null">#{patientId},</if>
             <if test="registrationId != null">#{registrationId},</if>
             <if test="visitDate != null">#{visitDate},</if>

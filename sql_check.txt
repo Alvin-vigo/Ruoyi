@@ -1,3 +1,0 @@
-drug_script_exists=False
-schema_has_drug_table=True
-schema_has_drug_data=True

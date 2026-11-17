@@ -325,9 +325,14 @@ export default {
       }
       this.aiGenerating = true;
       const fill = (profile) => {
+        if (!profile) {
+          this.$modal.msgWarning("患者ID " + this.form.patientId + " 不存在，请检查后重试");
+          this.aiGenerating = false;
+          return;
+        }
         const payload = {
           patientId: this.form.patientId,
-          patientName: profile ? profile.patientName : (this.form.patientName || ''),
+          patientName: profile.patientName || (this.form.patientName || ''),
           age: profile ? this.calcAge(profile.birthDate) : 0,
           gender: profile ? (profile.gender === '1' ? '女' : '男') : '男',
           chiefComplaint: this.form.chiefComplaint || '',
@@ -343,7 +348,7 @@ export default {
           this.aiGenerating = false;
         }).catch(() => { this.aiGenerating = false; });
       };
-      getPatient(this.form.patientId).then(r => fill(r)).catch(() => fill(null));
+      getPatient(this.form.patientId).then(r => fill(r && r.data)).catch(() => fill(null));
     },
     parseSection(content, title) {
       if (!content) return '';
@@ -362,6 +367,7 @@ export default {
       return age;
     },
     submitForm() {
+      if (!this.$refs.form) return
       this.$refs["form"].validate(valid => {
         if (valid) {
           if (this.form.diagnosisId != null) {
@@ -391,7 +397,7 @@ export default {
     },
     handleExport() {
       const params = this.addDateRange(this.queryParams, this.dateRange, 'visitDate');
-      this.download('medical/diagnosis/export', {
+      this.download('/medical/diagnosis/export', {
         ...params
       }, `diagnosis_${new Date().getTime()}.xlsx`)
     }

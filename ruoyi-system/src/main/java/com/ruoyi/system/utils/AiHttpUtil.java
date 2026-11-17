@@ -106,11 +106,15 @@ public class AiHttpUtil {
     /**
      * 模块④：RAG 导诊问答
      */
-    public JsonNode ragChat(String question, Integer topK) {
-        Map<String, Object> body = new java.util.HashMap<>(2);
+    public JsonNode ragChat(String question, Integer topK, String sessionId) {
+        Map<String, Object> body = new java.util.HashMap<>(3);
         body.put("question", question);
         if (topK != null && topK > 0) {
             body.put("top_k", topK);
+        }
+        // B-18：透传 session_id，使经后端链路的多轮对话在 FastAPI 侧能命中历史记忆
+        if (sessionId != null && !sessionId.isEmpty()) {
+            body.put("session_id", sessionId);
         }
         return postJson("/rag_chat", body);
     }

@@ -1,4 +1,5 @@
 import request from '@/utils/request'
+import { getToken } from '@/utils/auth'
 
 // 注意：request.js 的响应拦截器返回的是整个响应体（AjaxResult：{msg, code, data}），
 // 而 FastAPI 微服务自身又包了一层 {code, msg, data}，Java 转发时未拆。
@@ -38,9 +39,17 @@ const AI_BASE = process.env.VUE_APP_AI_BASE || 'http://127.0.0.1:8000'
  * 任何网络错误都会 reject，调用方应回退到非流式 generateRecord。
  */
 export function generateRecordStream(payload, onDelta, onDone) {
+  // 本链路绕过后端直连 FastAPI，因此不会经过 axios 的请求拦截器，
+  // 必须在这里手动带上令牌，否则 AI 侧无从识别调用方。
+  // FastAPI 已配置 allow_headers=["*"]，可正常接收 Authorization。
+  const headers = { 'Content-Type': 'application/json' }
+  const token = getToken()
+  if (token) {
+    headers['Authorization'] = 'Bearer ' + token
+  }
   return fetch(`${AI_BASE}/api/ai/generate_record_stream`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(payload)
   }).then(resp => {
     if (!resp.ok) {

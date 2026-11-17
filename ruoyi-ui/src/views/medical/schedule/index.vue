@@ -42,7 +42,9 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="科室" align="center" prop="dept" width="100" />
       <el-table-column label="出诊医生" align="center" prop="doctorName" width="120" />
-      <el-table-column label="排班日期" align="center" prop="scheduleDate" width="130" />
+      <el-table-column label="排班日期" align="center" prop="scheduleDate" width="130">
+        <template slot-scope="scope">{{ parseTime(scope.row.scheduleDate, '{y}-{m}-{d}') }}</template>
+      </el-table-column>
       <el-table-column label="时段" align="center" prop="period" width="80">
         <template slot-scope="scope">{{ scope.row.period === '1' ? '下午' : '上午' }}</template>
       </el-table-column>
@@ -117,6 +119,14 @@ export default {
   data() {
     return {
       loading: false,
+      // 排班只能选今天及以后的日期
+      dateOptions: {
+        disabledDate(time) {
+          const d = new Date(time); d.setHours(0, 0, 0, 0)
+          const t = new Date(); t.setHours(0, 0, 0, 0)
+          return d.getTime() < t.getTime()
+        }
+      },
       showSearch: true,
       scheduleList: [],
       total: 0,

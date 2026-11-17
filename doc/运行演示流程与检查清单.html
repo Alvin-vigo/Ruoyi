@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>若依医疗系统 · 运行演示流程与检查清单</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#ffffff; --ink:#1f2d3d; --sub:#5a6b7b;
+    --brand:#2f6fed; --brand2:#16a085; --warn:#e67e22; --bad:#e74c3c; --ok:#27ae60;
+    --line:#e3e8ef; --soft:#eef3fb;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;}
+  .wrap{max-width:1080px;margin:0 auto;padding:32px 24px 64px;}
+  header.hero{background:linear-gradient(120deg,#2f6fed,#16a085);color:#fff;border-radius:16px;padding:30px 34px;box-shadow:0 8px 24px rgba(47,111,237,.18);}
+  header.hero h1{margin:0 0 6px;font-size:26px;letter-spacing:.5px;}
+  header.hero p{margin:0;opacity:.92;font-size:14px;}
+  .tag{display:inline-block;background:rgba(255,255,255,.22);border-radius:20px;padding:3px 12px;font-size:12px;margin:8px 6px 0 0;}
+  section{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px 26px;margin-top:22px;box-shadow:0 2px 8px rgba(31,45,61,.04);}
+  h2{font-size:19px;margin:0 0 14px;display:flex;align-items:center;gap:10px;}
+  h2 .num{background:var(--brand);color:#fff;width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;}
+  h3{font-size:15px;margin:18px 0 8px;color:var(--brand);}
+  p.note{color:var(--sub);font-size:13.5px;margin:6px 0;}
+  table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13.5px;}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top;}
+  th{background:var(--soft);color:var(--ink);font-weight:600;}
+  tr:nth-child(even) td{background:#fafcff;}
+  code{background:#eef2f7;color:#1b3a8c;padding:2px 6px;border-radius:5px;font-size:12.5px;font-family:"Cascadia Code",Consolas,monospace;}
+  .pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:12px;font-weight:600;}
+  .pill.ok{background:#e6f7ee;color:var(--ok);}
+  .pill.warn{background:#fdf0e3;color:var(--warn);}
+  .pill.bad{background:#fdecea;color:var(--bad);}
+  .step{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-bottom:1px dashed var(--line);}
+  .step:last-child{border-bottom:none;}
+  .step .sn{flex:0 0 34px;height:34px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;}
+  .step .body{flex:1;}
+  .step .body b{color:var(--ink);}
+  .chk{list-style:none;padding:0;margin:8px 0;}
+  .chk li{padding:9px 12px;border:1px solid var(--line);border-radius:9px;margin:7px 0;display:flex;gap:10px;align-items:flex-start;background:#fff;}
+  .chk li .box{flex:0 0 20px;height:20px;border:2px solid var(--brand);border-radius:5px;display:inline-flex;align-items:center;justify-content:center;color:var(--brand);font-weight:700;font-size:13px;}
+  .chk li.done .box{background:var(--ok);border-color:var(--ok);color:#fff;}
+  .chk li .txt b{display:block;font-size:14px;}
+  .chk li .txt span{color:var(--sub);font-size:12.5px;}
+  .svgbox{width:100%;overflow-x:auto;background:var(--soft);border-radius:12px;padding:16px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px;}
+  .mini{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:12px 14px;}
+  .mini .t{font-weight:700;font-size:14px;}
+  .mini .p{color:var(--sub);font-size:12.5px;margin-top:2px;}
+  .callout{border-left:4px solid var(--warn);background:#fff8f1;padding:12px 16px;border-radius:8px;margin:12px 0;font-size:13.5px;}
+  .callout.brand{border-color:var(--brand);background:#f2f7ff;}
+  footer{margin-top:30px;text-align:center;color:var(--sub);font-size:12.5px;}
+  .legend{font-size:12.5px;color:var(--sub);margin-top:8px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>若依医疗一体化管理系统</h1>
+    <p>运行演示流程 · 环境清单 · 功能验证 CheckList（适用于答辩 / 课程演示）</p>
+    <div>
+      <span class="tag">Spring Boot 后端</span>
+      <span class="tag">Vue2 前端</span>
+      <span class="tag">FastAPI AI 微服务</span>
+      <span class="tag">Ollama 大模型</span>
+      <span class="tag">MySQL + Redis</span>
+    </div>
+  </header>
+
+  <!-- 架构 -->
+  <section>
+    <h2><span class="num">1</span>系统架构与数据流</h2>
+    <p class="note">浏览器访问前端 8081，前端经 dev 代理把请求转发给后端 8080；后端把 AI 类请求再转给 FastAPI 8000；AI 服务调用本地 Ollama 11434 的大模型或本地训练的 sklearn / PyTorch 模型。登录态 token 存于 Redis(Memurai) 6379，业务数据存于 MySQL 3306。</p>
+    <div class="svgbox">
+      <svg viewBox="0 0 980 380" xmlns="http://www.w3.org/2000/svg" font-family="Microsoft YaHei, sans-serif" font-size="13">
+        <defs>
+          <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#2f6fed"/></marker>
+          <marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#16a085"/></marker>
+        </defs>
+        <!-- 浏览器 -->
+        <rect x="30" y="150" width="150" height="70" rx="12" fill="#2f6fed" stroke="#1b4fc4"/>
+        <text x="105" y="178" fill="#fff" text-anchor="middle" font-weight="700">浏览器</text>
+        <text x="105" y="198" fill="#dbe7ff" text-anchor="middle">用户操作</text>
+        <!-- 前端 -->
+        <rect x="230" y="150" width="160" height="70" rx="12" fill="#fff" stroke="#2f6fed"/>
+        <text x="310" y="176" text-anchor="middle" font-weight="700">前端 Vue2</text>
+        <text x="310" y="196" text-anchor="middle" fill="#5a6b7b">:8081 (dev 代理)</text>
+        <!-- 后端 -->
+        <rect x="440" y="150" width="160" height="70" rx="12" fill="#fff" stroke="#2f6fed"/>
+        <text x="520" y="176" text-anchor="middle" font-weight="700">后端 Spring Boot</text>
+        <text x="520" y="196" text-anchor="middle" fill="#5a6b7b">:8080 (jar)</text>
+        <!-- AI -->
+        <rect x="650" y="60" width="160" height="70" rx="12" fill="#fff" stroke="#16a085"/>
+        <text x="730" y="86" text-anchor="middle" font-weight="700">AI 微服务 FastAPI</text>
+        <text x="730" y="106" text-anchor="middle" fill="#5a6b7b">:8000</text>
+        <!-- Ollama -->
+        <rect x="650" y="240" width="160" height="70" rx="12" fill="#fff" stroke="#16a085"/>
+        <text x="730" y="266" text-anchor="middle" font-weight="700">Ollama 大模型</text>
+        <text x="730" y="286" text-anchor="middle" fill="#5a6b7b">:11434 qwen2.5:7b</text>
+        <!-- Redis -->
+        <rect x="860" y="150" width="100" height="70" rx="12" fill="#fff" stroke="#e67e22"/>
+        <text x="910" y="178" text-anchor="middle" font-weight="700">Redis</text>
+        <text x="910" y="198" text-anchor="middle" fill="#5a6b7b">:6379 Memurai</text>
+        <!-- MySQL -->
+        <rect x="440" y="280" width="160" height="70" rx="12" fill="#fff" stroke="#e67e22"/>
+        <text x="520" y="308" text-anchor="middle" font-weight="700">MySQL 8</text>
+        <text x="520" y="328" text-anchor="middle" fill="#5a6b7b">:3306 ruoyi_medical</text>
+
+        <!-- 连线 -->
+        <line x1="180" y1="185" x2="225" y2="185" stroke="#2f6fed" marker-end="url(#ar)"/>
+        <line x1="390" y1="185" x2="435" y2="185" stroke="#2f6fed" marker-end="url(#ar)"/>
+        <line x1="600" y1="185" x2="645" y2="120" stroke="#16a085" marker-end="url(#ar2)"/>
+        <line x1="730" y1="130" x2="730" y2="235" stroke="#16a085" marker-end="url(#ar2)"/>
+        <line x1="680" y1="185" x2="855" y2="185" stroke="#e67e22" marker-end="url(#ar)"/>
+        <line x1="520" y1="220" x2="520" y2="275" stroke="#e67e22" marker-end="url(#ar)"/>
+        <text x="300" y="142" fill="#2f6fed" font-size="11" text-anchor="middle">HTTP / 代理转发</text>
+        <text x="560" y="250" fill="#5a6b7b" font-size="11" text-anchor="middle">业务 SQL</text>
+      </svg>
+    </div>
+    <div class="legend">蓝线：业务请求链路　绿线：AI 推理链路　橙线：数据/缓存依赖</div>
+  </section>
+
+  <!-- 环境清单 -->
+  <section>
+    <h2><span class="num">2</span>环境依赖清单</h2>
+    <p class="note">本机已预装并验证通过。更换机器时，仅需修改 <code>start.bat</code> 顶部的路径变量。</p>
+    <table>
+      <thead><tr><th>组件</th><th>版本 / 说明</th><th>本机路径 / 端口</th><th>用途</th></tr></thead>
+      <tbody>
+        <tr><td>JDK</td><td>1.8（jdk8）</td><td><code>D:\jdk8\bin\java.exe</code></td><td>运行后端 jar</td></tr>
+        <tr><td>Node.js</td><td>16.x</td><td><code>D:\nodejs16\npm.cmd</code></td><td>前端 dev / 构建</td></tr>
+        <tr><td>Python venv</td><td>3.13 · ruoyi-ai</td><td><code>envs/ruoyi-ai/Scripts/python.exe</code></td><td>AI 微服务运行环境（fastapi/chromadb/sklearn）</td></tr>
+        <tr><td>MySQL</td><td>8.0 · 服务名 MySQL80</td><td>127.0.0.1:3306 · 库 <code>ruoyi_medical</code></td><td>业务元数据库</td></tr>
+        <tr><td>Redis（Memurai）</td><td>兼容 Redis 协议</td><td><code>D:\Memurai\memurai.exe</code> · :6379</td><td>存储登录 token</td></tr>
+        <tr><td>Ollama</td><td>模型 <code>qwen2.5:7b-instruct-q4_K_M</code></td><td><code>D:\AI\Ollama\ollama.exe</code> · :11434</td><td>病历生成等大模型能力</td></tr>
+        <tr><td>Maven</td><td>3.9.16（可选，重构建用）</td><td><code>D:\apache-maven-3.9.16</code></td><td>仅修改后端源码后重新打包</td></tr>
+      </tbody>
+    </table>
+    <div class="callout brand">
+      <b>默认账号：</b><code>admin / admin123</code>　·　<b>验证码：</b>本项目裁剪版未启用验证码（Kaptcha），登录页直接输入账号密码即可。
+    </div>
+  </section>
+
+  <!-- 启动流程 -->
+  <section>
+    <h2><span class="num">3</span>启动流程（两种方式）</h2>
+
+    <h3>A. 一键启动（推荐演示用）</h3>
+    <p class="note">双击项目根目录的 <code>start.bat</code>，脚本依次拉起 6 个服务，各服务在独立窗口运行。已内置 Ollama 启动步骤，无需手动起。</p>
+    <div class="step"><div class="sn">1</div><div class="body"><b>启动 MySQL</b><br>自动 <code>net start MySQL80</code>（失败回退 MySQL）；本机元数据库 ruoyi_medical。</div></div>
+    <div class="step"><div class="sn">2</div><div class="body"><b>启动 Redis（Memurai）</b><br>启动 <code>D:\Memurai\memurai.exe</code>，端口 6379，登录 token 存储于此。</div></div>
+    <div class="step"><div class="sn">3</div><div class="body"><b>启动后端</b><br>若已有 jar 直接 <code>java -jar ruoyi-admin-1.0.0.jar --server.port=8080</code>；否则先 <code>mvnw clean install -DskipTests</code> 再启动。<br><span class="pill warn">注意</span> 强制 <code>--server.port=8080</code> 是为防止系统环境变量注入随机端口（实测曾出现 58600 / 57999 导致 404）。</div></div>
+    <div class="step"><div class="sn">4</div><div class="body"><b>启动前端</b><br><code>npm run dev</code>，监听 :8081，含 dev 代理（已补齐 /login、/getInfo、/logout 转发）。</div></div>
+    <div class="step"><div class="sn">5</div><div class="body"><b>启动 AI 微服务</b><br><code>uvicorn main:app --port 8000</code>，提供病历/风险/胸片/RAG 接口。</div></div>
+    <div class="step"><div class="sn">6</div><div class="body"><b>启动 Ollama</b><br><code>ollama.exe serve</code>，:11434；首次需预拉模型（约 4.7GB，仅一次）：<code>ollama pull qwen2.5:7b-instruct-q4_K_M</code>。</div></div>
+
+    <h3>B. 手动分步（调试 / 单独验证用）</h3>
+    <table>
+      <thead><tr><th>服务</th><th>命令（在项目根目录执行）</th><th>端口</th></tr></thead>
+      <tbody>
+        <tr><td>MySQL</td><td><code>net start MySQL80</code></td><td>3306</td></tr>
+        <tr><td>Redis</td><td><code>start "" "D:\Memurai\memurai.exe"</code></td><td>6379</td></tr>
+        <tr><td>后端</td><td><code>D:\jdk8\bin\java -jar ruoyi-admin/target/ruoyi-admin-1.0.0.jar --server.port=8080</code></td><td>8080</td></tr>
+        <tr><td>前端</td><td><code>cd ruoyi-ui &amp;&amp; D:\nodejs16\npm.cmd run dev</code></td><td>8081</td></tr>
+        <tr><td>AI</td><td><code>cd ruoyi-ai &amp;&amp; envs\ruoyi-ai\Scripts\python -m uvicorn main:app --host 127.0.0.1 --port 8000</code></td><td>8000</td></tr>
+        <tr><td>Ollama</td><td><code>start "" "D:\AI\Ollama\ollama.exe" serve</code></td><td>11434</td></tr>
+      </tbody>
+    </table>
+    <div class="callout">
+      <b>启动顺序：</b>先起 MySQL + Redis → 再起后端（依赖数据库/缓存）→ 然后前端 / AI（依赖后端）→ 最后 Ollama（AI 大模型依赖）。建议后端起来后再开前端，避免首屏请求失败。
+    </div>
+  </section>
+
+  <!-- 端口速查 -->
+  <section>
+    <h2><span class="num">4</span>端口与访问地址速查</h2>
+    <div class="grid">
+      <div class="mini"><div class="t">🖥 前端（演示入口）</div><div class="p">http://127.0.0.1:8081</div></div>
+      <div class="mini"><div class="t">⚙ 后端 API</div><div class="p">http://127.0.0.1:8080</div></div>
+      <div class="mini"><div class="t">🤖 AI 接口文档</div><div class="p">http://127.0.0.1:8000/docs</div></div>
+      <div class="mini"><div class="t">🧠 大模型</div><div class="p">http://127.0.0.1:11434</div></div>
+      <div class="mini"><div class="t">🗄 Redis</div><div class="p">127.0.0.1:6379</div></div>
+      <div class="mini"><div class="t">🛢 MySQL</div><div class="p">127.0.0.1:3306</div></div>
+    </div>
+  </section>
+
+  <!-- 功能验证清单 -->
+  <section>
+    <h2><span class="num">5</span>功能演示验证 CheckList</h2>
+    <p class="note">演示时逐项勾选。以下接口与页面均已在本次环境中实测通过（标注 ✅）。</p>
+
+    <h3>① 登录与基础</h3>
+    <ul class="chk">
+      <li class="done"><span class="box">✓</span><div class="txt"><b>登录页面加载</b><span>访问 :8081，输入 admin/admin123，无验证码直接登录。</span></div></li>
+      <li class="done"><span class="box">✓</span><div class="txt"><b>获取用户信息 / 权限</b><span>GET /getInfo 返回 admin 角色与菜单权限，左侧菜单正常渲染。</span></div></li>
+      <li class="done"><span class="box">✓</span><div class="txt"><b>统计看板</b><span>首页 4 指标：挂号量 / 处方量 / 发药总量 / 库存预警。</span></div></li>
+    </ul>
+
+    <h3>② 业务闭环（挂号 → 诊疗 → 处方 → 发药）</h3>
+    <ul class="chk">
+      <li class="done"><span class="box">✓</span><div class="txt"><b>患者管理</b><span>患者列表 / 新增（含身份证、手机号格式校验）。</span></div></li>
+      <li class="done"><span class="box">✓</span><div class="txt"><b>挂号</b><span>生成 GH+yyyymmdd+4位 单号，占用号源。</span></div></li>
+      <li class="done"><span class="box">✓</span><div class="txt"><b>诊疗 / 开方</b><span>开始就诊建诊疗草稿，开处方按价目表自动计价 + 过敏校验。</span></div></li>
+      <li class="done"><span class="box">✓</span><div class="txt"><b>发药 / 退药</b><span>效期校验 + 扣库存；退药幂等回滚；审计落 medical_audit_log。</span></div></li>
+      <li class="done"><span class="box">✓</span><div class="txt"><b>随访 / 站内信</b><span>随访计划列表；站内信未读数正常显示（已修复响应解包）。</span></div></li>
+    </ul>
+
+    <h3>③ AI 四大能力</h3>
+    <ul class="chk">
+      <li class="done"><span class="box">✓</span><div class="txt"><b>病历生成</b><span>走 Ollama 真实生成（约 40–52 秒）；Ollama 不可用时降级模板草稿。</span></div></li>
+      <li class="done"><span class="box">✓</span><div class="txt"><b>糖尿病风险预测</b><span>已训练模型 model_risk.pkl（8 项特征，AUC 0.81）；历史记录时间已格式化。</span></div></li>
+      <li class="done"><span class="box">✓</span><div class="txt"><b>胸片三分类</b><span>chest_cnn.pth（COVID-19 / NORMAL / Viral Pneumonia），val_acc 0.96，COVID 召回 1.0；结果落库 probs_json。</span></div></li>
+      <li class="done"><span class="box">✓</span><div class="txt"><b>导诊 RAG 问答</b><span>知识库 18 条（常见病 + 导诊分诊）；实测“胸痛伴出汗挂什么科”→ 正确引用分诊指引。</span></div></li>
+    </ul>
+
+    <h3>④ 定时任务与知识库管理</h3>
+    <ul class="chk">
+      <li class="done"><span class="box">✓</span><div class="txt"><b>定时任务</b><span>monitor/job 页，业务任务从 job_id 100 起，可选启停。</span></div></li>
+      <li class="done"><span class="box">✓</span><div class="txt"><b>知识库维护</b><span>知识列表页可新增 / 同步到向量库（/knowledge/sync）。</span></div></li>
+    </ul>
+  </section>
+
+  <!-- 常见问题 -->
+  <section>
+    <h2><span class="num">6</span>常见问题排查（演示救急）</h2>
+    <table>
+      <thead><tr><th>现象</th><th>原因 / 解决</th></tr></thead>
+      <tbody>
+        <tr><td>前端登录页报 404 / 请求报错</td><td>dev 代理漏转登录接口。已修复：vue.config.js 已含 /login、/getInfo、/logout 转发；重启 <code>npm run dev</code> 即可。</td></tr>
+        <tr><td>后端访问 404，端口是 5xxxx</td><td>系统注入随机 SERVER_PORT。<span class="pill warn">解决</span> 启动加 <code>--server.port=8080</code>（start.bat 已内置）。</td></tr>
+        <tr><td>AI 病历生成一直转圈</td><td>Ollama 未启动或模型未拉取。检查 :11434 是否存活，执行 <code>ollama pull qwen2.5:7b-instruct-q4_K_M</code>。</td></tr>
+        <tr><td>登录提示“Redis 连接失败”</td><td>Memurai 未起。手动 <code>start "" "D:\Memurai\memurai.exe"</code> 后重启后端。</td></tr>
+        <tr><td>无头脚本跑 start.bat 服务起不来</td><td><code>start ""</code> 弹窗在无头 shell 下不存活。<span class="pill ok">正常</span> 直接双击运行即可，不要从脚本环境整跑验证。</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 演示路线 -->
+  <section>
+    <h2><span class="num">7</span>推荐演示路线（约 8 分钟）</h2>
+    <ol>
+      <li><b>开场（1′）</b>：打开架构图，说明“前端 → 后端 → AI → 大模型/模型”的分层，以及 MySQL / Redis 支撑。</li>
+      <li><b>登录与看板（1′）</b>：:8081 登录 admin，展示统计看板 4 指标。</li>
+      <li><b>业务闭环（3′）</b>：患者新增 → 挂号（看单号/号源）→ 开处方（自动计价）→ 发药（库存扣减）→ 审计日志。</li>
+      <li><b>AI 亮点（3′）</b>：①风险预测（填 8 项指标看结果）②胸片上传三分类 ③导诊 RAG 问答（胸痛挂科）④病历生成（可演示降级或等 Ollama）。</li>
+    </ol>
+    <div class="callout brand">提示：胸片与风险预测为本地模型、秒级返回；病历生成依赖 Ollama 实时推理（约 40–52 秒），演示前请确认 Ollama 已起且模型已拉取，或提前说明降级策略。</div>
+  </section>
+
+  <footer>
+    若依医疗一体化管理系统 · 运行演示流程与检查清单　|　生成日期：2026-09-19　|　默认账号 admin / admin123
+  </footer>
+
+</div>
+</body>
+</html>

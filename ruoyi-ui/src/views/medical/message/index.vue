@@ -159,9 +159,9 @@ export default {
       })
     },
     getUnread() {
-      // 响应拦截器已解包 res.data，此处 response 即为未读数本身（数字）
-      unreadCount(this.currentReceiver).then(count => {
-        this.unreadTotal = count || 0
+      // 响应拦截器返回的是整个响应体 {msg, code, data}，未读数在 data 字段
+      unreadCount(this.currentReceiver).then(res => {
+        this.unreadTotal = (res && res.data) || 0
       })
     },
     handleQuery() {

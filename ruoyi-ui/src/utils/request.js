@@ -1,6 +1,8 @@
 import axios from 'axios'
 import { Message } from 'element-ui'
-import { getToken } from '@/utils/auth'
+// removeToken 必须一并导入：401 分支要用它清理本地凭证。
+// 只导入 getToken 会导致 removeToken is not defined，使后续跳转登录页的代码全部不执行。
+import { getToken, removeToken } from '@/utils/auth'
 
 // 创建 axios 实例
 const service = axios.create({

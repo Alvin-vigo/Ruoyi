@@ -1,5 +1,6 @@
 package com.ruoyi.controller;
 
+import com.ruoyi.common.config.MedicalProperties;
 import com.ruoyi.common.core.domain.AjaxResult;
 import com.ruoyi.common.core.page.TableDataInfo;
 import com.ruoyi.system.domain.MedicalDrug;
@@ -37,6 +38,9 @@ class DrugControllerTest {
     @Mock
     private IMedicalDrugService medicalDrugService;
 
+    @Mock
+    private MedicalProperties medicalProperties;
+
     private DrugController drugController;
 
     private MedicalDrug sample;
@@ -46,6 +50,7 @@ class DrugControllerTest {
         drugController = new DrugController();
         // 将 mock 服务注入 Controller 的 @Autowired 字段，规避 Spring 上下文
         ReflectionTestUtils.setField(drugController, "medicalDrugService", medicalDrugService);
+        ReflectionTestUtils.setField(drugController, "medicalProperties", medicalProperties);
         sample = new MedicalDrug();
     }
 
@@ -140,5 +145,20 @@ class DrugControllerTest {
         assertEquals(200, result.getCode());
         assertSame(nearExpiry, result.get("data"));
         verify(medicalDrugService).selectMedicalDrugNearExpiry(90);
+    }
+
+    @Test
+    @DisplayName("预警阈值未传参时：应回落到统一配置 medical.low-stock-threshold（B-07）")
+    void lowStock_withoutParam_usesConfiguredThreshold() {
+        List<MedicalDrug> lowStock = Arrays.asList(sample);
+        // 配置值刻意取一个与历史硬编码 10 / 50 都不同的数，确保走的是配置而非任何硬编码
+        when(medicalProperties.getLowStockThreshold()).thenReturn(25);
+        when(medicalDrugService.selectMedicalDrugLowStock(25)).thenReturn(lowStock);
+
+        AjaxResult result = drugController.lowStock(null);
+
+        assertEquals(200, result.getCode());
+        assertSame(lowStock, result.get("data"));
+        verify(medicalDrugService).selectMedicalDrugLowStock(25);
     }
 }

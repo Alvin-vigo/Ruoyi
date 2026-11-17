@@ -41,10 +41,13 @@ public class MedicalAuditLogController {
     }
 
     /**
-     * 健康检查用：返回审计日志总条数
+     * 统计审计日志条数
+     *
+     * <p>支持与 /list 相同的筛选条件。这里必须走 Mapper 的 COUNT(1)：
+     * 审计表年增约 40 万行，若先把全表捞成 List 再取 size，会拖垮内存。
      */
     @GetMapping("/count")
-    public AjaxResult count() {
-        return AjaxResult.success(auditLogMapper.selectMedicalAuditLogList(new MedicalAuditLog()).size());
+    public AjaxResult count(MedicalAuditLog q) {
+        return AjaxResult.success(auditLogMapper.selectMedicalAuditLogCount(q));
     }
 }

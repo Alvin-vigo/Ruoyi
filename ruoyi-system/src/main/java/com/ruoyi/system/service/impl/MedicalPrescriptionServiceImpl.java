@@ -1,5 +1,6 @@
 package com.ruoyi.system.service.impl;
 
+import com.ruoyi.common.core.redis.RedisCache;
 import com.ruoyi.common.exception.ServiceException;
 import com.ruoyi.common.utils.AllergyChecker;
 import org.springframework.security.core.Authentication;
@@ -29,9 +30,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 处方信息Service业务层处理（含明细、发药、库存扣减）
@@ -60,15 +63,28 @@ public class MedicalPrescriptionServiceImpl implements IMedicalPrescriptionServi
     private IMedicalPatientService patientService;
 
     @Autowired
+    private RedisCache redisCache;
+
+    @Autowired
     private MedicalPriceItemMapper priceItemMapper;
 
     @Autowired
     private MedicalAuditLogMapper auditLogMapper;
 
+    /** 发药防重复锁窗口（毫秒）：同一处方在该窗口内只允许一次发药请求 */
+    private static final long DISPENSE_LOCK_WINDOW_MS = 5000L;
+
+    /** 分布式锁键前缀 */
+    private static final String DISPENSE_LOCK_PREFIX = "medical:dispense:lock:";
+
+    /** 进程内锁的清理阈值：条目超过该数量时才做一次过期扫描，避免每次 put 都遍历 */
+    private static final int LOCAL_LOCK_CLEANUP_THRESHOLD = 64;
+
     /**
-     * 发药防重复提交锁：key=处方ID，value=最近一次发药开始时间戳。
-     * 同一处方 5 秒内重复调用直接拒绝，规避前端连点 / 并发请求导致的重复扣库存。
-     * 数据侧 dispensedQuantity 已防止"超发"，此处是接口层并发安全兜底。
+     * 发药防重复提交锁（进程内兜底）：key=处方ID，value=最近一次发药开始时间戳。
+     *
+     * <p>主防线是 Redis 分布式锁（多实例部署有效）；本 Map 仅在 Redis 不可用降级时兜底，
+     * 保证单实例场景下仍具备防连点能力。会随 put 顺带清理过期条目，避免无界增长。
      */
     private final Map<String, Long> dispensingLocks = new ConcurrentHashMap<>();
 
@@ -211,13 +227,26 @@ public class MedicalPrescriptionServiceImpl implements IMedicalPrescriptionServi
             return;
         }
         // 接口层防重复提交：同一处方 5 秒内重复发药直接拒绝
+        //
+        // 两级防护：
+        //   ① Redis 分布式锁 —— 多实例部署下跨 JVM 生效，TTL 到期自动释放；
+        //      Redis 不可用时会降级「放行」，此时由 ② 兜底。
+        //   ② 进程内锁 —— 单实例场景防连点；顺带清理过期条目避免 Map 无界增长。
+        // 真正的资金/库存正确性由数据库的原子扣减 SQL 与 dispensedQuantity 保证，
+        // 锁只是体验层与并发兜底，因此 Redis 挂掉时选择放行而非阻断业务。
         String lockKey = String.valueOf(prescriptionId);
         long now = System.currentTimeMillis();
         Long last = dispensingLocks.get(lockKey);
-        if (last != null && now - last < 5000) {
+        if (last != null && now - last < DISPENSE_LOCK_WINDOW_MS) {
+            throw new ServiceException("操作过于频繁，请勿重复点击发药，稍后重试");
+        }
+        boolean acquired = redisCache.tryLock(DISPENSE_LOCK_PREFIX + lockKey,
+                String.valueOf(now), DISPENSE_LOCK_WINDOW_MS, TimeUnit.MILLISECONDS);
+        if (!acquired) {
             throw new ServiceException("操作过于频繁，请勿重复点击发药，稍后重试");
         }
         dispensingLocks.put(lockKey, now);
+        cleanExpiredDispensingLocks(now);
         for (MedicalPrescriptionItem dispenseItem : dispenseItems) {
             Long itemId = dispenseItem.getItemId();
             int qty = dispenseItem.getQuantity() == null ? 0 : dispenseItem.getQuantity();
@@ -377,6 +406,26 @@ public class MedicalPrescriptionServiceImpl implements IMedicalPrescriptionServi
             return pres == null ? null : pres.getPrescriptionNo();
         } catch (Exception e) {
             return null;
+        }
+    }
+
+    /**
+     * 清理已过期的进程内发药锁条目，防止 ConcurrentHashMap 无界增长。
+     *
+     * <p>只在条目数超过阈值时才遍历，避免每次发药都做一次全量扫描。
+     * 这里的锁只是并发兜底，清理属于"尽力而为"，不保证严格一致。
+     */
+    private void cleanExpiredDispensingLocks(long now) {
+        if (dispensingLocks.size() < LOCAL_LOCK_CLEANUP_THRESHOLD) {
+            return;
+        }
+        Iterator<Map.Entry<String, Long>> it = dispensingLocks.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, Long> entry = it.next();
+            Long ts = entry.getValue();
+            if (ts == null || now - ts >= DISPENSE_LOCK_WINDOW_MS) {
+                it.remove();
+            }
         }
     }
 }

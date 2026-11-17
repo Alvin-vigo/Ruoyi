@@ -4,7 +4,7 @@ import com.ruoyi.common.annotation.Excel;
 import com.ruoyi.common.core.domain.BaseEntity;
 
 /**
- * 胸片 AI 初筛记录 medical_chest_xray
+ * 胸片 AI 初筛记录 medical_chest_xray（三分类：COVID-19 / NORMAL / Viral Pneumonia）
  *
  * @author ruoyi
  */
@@ -23,22 +23,16 @@ public class MedicalChestXray extends BaseEntity {
     @Excel(name = "影像路径")
     private String imgUrl;
 
-    /** 判定结果文案：正常 / 异常 */
+    /** 判定结果文案：COVID-19 / NORMAL / Viral Pneumonia */
     @Excel(name = "判定结果")
     private String predictResult;
-
-    /** 结果编码：normal / abnormal */
-    private String resultLabel;
 
     /** 置信度（取判定类别的概率） */
     @Excel(name = "置信度")
     private java.math.BigDecimal confidence;
 
-    /** 正常类概率 */
-    private java.math.BigDecimal probNormal;
-
-    /** 异常类概率 */
-    private java.math.BigDecimal probAbnormal;
+    /** 三分类全概率（JSON：{类名:概率}），用于历史追溯与演示 */
+    private String probsJson;
 
     /** 推理设备 cuda / cpu */
     private String device;
@@ -79,14 +73,6 @@ public class MedicalChestXray extends BaseEntity {
         this.predictResult = predictResult;
     }
 
-    public String getResultLabel() {
-        return resultLabel;
-    }
-
-    public void setResultLabel(String resultLabel) {
-        this.resultLabel = resultLabel;
-    }
-
     public java.math.BigDecimal getConfidence() {
         return confidence;
     }
@@ -95,20 +81,12 @@ public class MedicalChestXray extends BaseEntity {
         this.confidence = confidence;
     }
 
-    public java.math.BigDecimal getProbNormal() {
-        return probNormal;
+    public String getProbsJson() {
+        return probsJson;
     }
 
-    public void setProbNormal(java.math.BigDecimal probNormal) {
-        this.probNormal = probNormal;
-    }
-
-    public java.math.BigDecimal getProbAbnormal() {
-        return probAbnormal;
-    }
-
-    public void setProbAbnormal(java.math.BigDecimal probAbnormal) {
-        this.probAbnormal = probAbnormal;
+    public void setProbsJson(String probsJson) {
+        this.probsJson = probsJson;
     }
 
     public String getDevice() {

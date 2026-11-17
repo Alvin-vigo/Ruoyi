@@ -1,294 +1,207 @@
-# 若依医疗管理系统
+# 若依医疗管理系统（RuoYi-Medical）
 
-基于 RuoYi（若依）前后端分离框架开发的医疗管理系统，使用 SpringBoot + MyBatis + MySQL 搭建后端服务，前端兼容 RuoYi-Vue。
+一套基于若依（RuoYi）快速开发框架**裁剪**而来的轻量级医疗业务管理系统，覆盖“患者就诊 → 医生诊疗 → 药房发药 → 随访管理”全流程，并集成 **AI 辅助能力**（智能病历、风险预测、胸片初筛、智能导诊）。纯本地部署，**不依赖任何外部公网服务**。
 
-## 技术栈
+---
 
-- **后端框架**: Spring Boot 2.7.x
-- **ORM 框架**: MyBatis
-- **数据库**: MySQL 8.0
-- **连接池**: Druid
-- **分页插件**: PageHelper
-- **Excel 导出**: EasyExcel
-- **代码生成**: Velocity 模板引擎
-- **构建工具**: Maven
-- **JDK 版本**: Java 8+
-- **前端框架**: Vue 2 + Element UI（兼容 RuoYi-Vue）
+## ✨ 功能特性
 
-## 项目结构
+- **业务闭环**：挂号（占号源）→ 开始就诊 → 诊疗记录 → 开方（自动计价 / 过敏校验）→ 发药（效期 / 库存校验）→ 退药回滚，关键操作全程审计留痕。
+- **患者与药品**：患者建档（身份证 / 手机号格式校验）、药品库存与近效期预警。
+- **运营看板**：13 项聚合指标，其中核心 4 项为挂号量 / 处方量 / 发药总量 / 库存预警（另含患者、诊疗、药品总量及科室、分类、费用、性别、年龄等分布）。
+- **AI 智能模块**：
+  - 📝 病历生成（Ollama 本地大模型，约 40–52 秒，离线可降级）
+  - 📊 糖尿病风险预测（已训练模型，AUC≈0.813，8 项临床特征）
+  - 🩻 胸片三分类识别（COVID-19 / NORMAL / Viral Pneumonia，macro-F1≈0.9428 / val_acc≈0.9416；COVID-19 召回 1.000、precision≈0.83，属筛查场景下的"宁枉勿纵"取舍）
+  - 💬 智能导诊（本地知识库 RAG 检索增强，库外问题自动拒答防幻觉）
+
+---
+
+## 🏗️ 系统架构
 
 ```
-ruoyi-medical
-├── ruoyi-admin                # 启动模块（启动类、Controller）
-│   └── src/main
-│       ├── java/com/ruoyi
-│       │   ├── RuoYiMedicalApplication.java    # 启动类
-│       │   └── controller                      # 控制层
-│       │       ├── PatientController.java      # 患者管理接口
-│       │       └── DiagnosisController.java    # 诊疗信息接口
-│       └── resources
-│           └── application.yml                # 配置文件
-│
-├── ruoyi-common               # 通用模块（工具类、基类、Excel、注解）
-│   └── src/main/java/com/ruoyi/common
-│       ├── annotation
-│       │   └── Excel.java                     # Excel 导出注解
-│       ├── core
-│       │   ├── domain
-│       │   │   ├── AjaxResult.java            # 统一返回结果
-│       │   │   └── BaseEntity.java            # 实体基类
-│       │   └── page
-│       │       ├── PageDomain.java            # 分页参数
-│       │       ├── TableDataInfo.java         # 分页结果
-│       │       └── TableSupport.java          # 分页工具
-│       ├── exception
-│       │   └── ServiceException.java          # 业务异常
-│       └── utils
-│           ├── StringUtils.java              # 字符串工具
-│           ├── DateUtils.java                # 时间工具
-│           └── poi
-│               └── ExcelUtil.java            # Excel 导出工具
-│
-├── ruoyi-framework            # 框架模块（配置、异常处理）
-│   └── src/main/java/com/ruoyi/framework
-│       ├── config
-│       │   ├── MyBatisConfig.java            # MyBatis配置
-│       │   └── CorsConfig.java                # 跨域配置
-│       └── web/exception
-│           └── GlobalExceptionHandler.java    # 全局异常处理
-│
-├── ruoyi-system               # 业务模块（医疗业务）
-│   └── src/main
-│       ├── java/com/ruoyi/system
-│       │   ├── domain
-│       │   │   ├── MedicalPatient.java        # 患者实体
-│       │   │   └── MedicalDiagnosis.java      # 诊疗实体
-│       │   ├── mapper
-│       │   │   ├── MedicalPatientMapper.java  # 患者Mapper
-│       │   │   └── MedicalDiagnosisMapper.java # 诊疗Mapper
-│       │   └── service
-│       │       ├── IMedicalPatientService.java
-│       │       ├── IMedicalDiagnosisService.java
-│       │       └── impl
-│       │           ├── MedicalPatientServiceImpl.java
-│       │           └── MedicalDiagnosisServiceImpl.java
-│       └── resources/mapper
-│           ├── MedicalPatientMapper.xml
-│           └── MedicalDiagnosisMapper.xml
-│
-├── ruoyi-generator            # 代码生成器模块
-│   └── src/main
-│       ├── java/com/ruoyi/generator
-│       │   ├── domain
-│       │   │   ├── GenTable.java              # 生成业务表
-│       │   │   └── GenTableColumn.java        # 生成业务表字段
-│       │   ├── mapper
-│       │   │   ├── GenTableMapper.java
-│       │   │   └── GenTableColumnMapper.java
-│       │   ├── service
-│       │   │   ├── IGenTableService.java
-│       │   │   └── impl/GenTableServiceImpl.java
-│       │   ├── controller/GenTableController.java
-│       │   ├── config/GenConfig.java
-│       │   └── util
-│       │       ├── GenUtils.java
-│       │       ├── VelocityInitializer.java
-│       │       └── VelocityUtils.java
-│       └── resources
-│           ├── mapper/generator
-│           │   ├── GenTableMapper.xml
-│           │   └── GenTableColumnMapper.xml
-│           └── vm
-│               ├── java                       # Java 后端模板
-│               ├── xml                        # MyBatis XML 模板
-│               ├── vue                        # Vue 前端模板
-│               └── sql                        # 菜单权限 SQL 模板
-│
-├── ruoyi-ui                   # RuoYi-Vue 兼容前端页面
-│   └── src
-│       ├── api
-│       │   └── medical
-│       │       ├── patient.js
-│       │       └── diagnosis.js
-│       └── views
-│           └── medical
-│               ├── patient/index.vue
-│               └── diagnosis/index.vue
-│
-├── sql
-│   ├── medical_schema.sql     # 数据库建表脚本
-│   └── medical_menu.sql       # 菜单权限脚本
-│
-└── doc
-    ├── 接口文档.md             # API接口文档
-    ├── 测试记录.md             # 测试记录文档
-    └── 部署说明.md             # 部署与使用说明
+浏览器 (Vue2 + Element UI, :8081)
+        │  HTTP / JSON
+        ▼
+后端 (Spring Boot / RuoYi 裁剪版, :8080)
+        │  ├─ MySQL 8.0  (ruoyi_medical, :3306)
+        │  └─ Redis      (Memurai, :6379, 令牌)
+        │
+        │  HTTP / JSON (AI 网关 AiHttpUtil)
+        ▼
+AI 服务 (FastAPI, :8000)
+        ├─ Ollama 大模型 (:11434, qwen2.5:7b)
+        ├─ 风险预测 / 胸片 (PyTorch + sklearn)
+        └─ 智能导诊 (Chroma 向量库 + 本地嵌入)
 ```
 
-## 快速开始
+---
 
-### 1. 环境准备
+## 🧰 技术栈
 
-- JDK 1.8+
-- **Maven：无需单独安装** —— 项目 `tools/apache-maven-3.9.6/` 已内置 Maven 3.9.6，换设备直接可用（见下方「项目内置 Maven」）
-- MySQL 8.0+
-- Node.js 14+（前端）
+| 层 | 技术 |
+|----|------|
+| 后端 | Spring Boot、Spring Security、JWT、MyBatis、Quartz、Redis |
+| 前端 | Vue2、Element UI、Axios |
+| AI | FastAPI、PyTorch、scikit-learn、Chroma、Ollama、sentence-transformers |
+| 数据 | MySQL 8.0（utf8mb4）、Redis（Memurai 兼容） |
 
-### 2. 数据库初始化
+---
 
-```sql
--- 执行 SQL 脚本
-source sql/medical_schema.sql;
-source sql/medical_menu.sql;
-```
+## ⚙️ 环境要求
 
-### 3. 修改配置
-
-编辑 `ruoyi-admin/src/main/resources/application.yml`，修改数据库连接信息：
-
-```yaml
-spring:
-  datasource:
-    url: jdbc:mysql://localhost:3306/ruoyi_medical?useUnicode=true&characterEncoding=utf8&serverTimezone=GMT%2B8
-    username: root
-    password: your_password
-```
-
-### 4. 启动后端
-
-```bash
-# 方式一（推荐）：使用项目内置 Maven，无需本机安装
-#   Windows CMD
-mvnw.cmd clean install -DskipTests
-#   Windows PowerShell
-.\mvnw.ps1 clean install -DskipTests
-#   Git Bash / Linux / macOS
-./mvnw clean install -DskipTests
-
-# 方式二：已安装 Maven 时可直接用 mvn
-mvn clean install -DskipTests
-```
-
-启动应用（任选其一）：
-
-```bash
-# 使用内置 Maven 启动
-mvnw.cmd -pl ruoyi-admin spring-boot:run
-
-# 或直接运行打好的 jar
-java -jar ruoyi-admin/target/ruoyi-admin-1.0.0.jar
-```
-
-或直接运行启动类：`com.ruoyi.RuoYiMedicalApplication`
-
-### 项目内置 Maven（换设备无需重新下载）
-
-项目 `tools/apache-maven-3.9.6/` 目录随代码一起携带了 Maven 3.9.6（约 10MB），
-拷贝/克隆整个项目即可在任何设备上构建，**无需再单独安装或下载 Maven**。
-
-| 环境 | 启动命令 |
-|------|----------|
-| Windows CMD | `mvnw.cmd clean install -DskipTests` |
-| Windows PowerShell | `.\mvnw.ps1 clean install -DskipTests` |
-| Git Bash / Linux / macOS | `./mvnw clean install -DskipTests` |
-
-要点说明：
-
-- 三个 `mvnw*` 脚本都会**自动定位项目根目录**，从 `tools/` 下取 Maven，与设备无关；
-- 仅需本机已装 **JDK 1.8+**（`JAVA_HOME` 或 PATH 中的 `java`），Maven 本身不必安装；
-- 依赖包默认缓存到用户目录 `~/.m2/repository`（首次构建需联网下载依赖；如需完全离线，可把 `~/.m2` 也一并拷贝）；
-- 如需升级/更换 Maven 版本，替换 `tools/` 下目录并同步修改 `mvnw*` 脚本中的 `apache-maven-3.9.6` 路径；
-- `mvnw.cmd` 仅含 ASCII 字符——批处理文件按控制台代码页（中文 Windows 为 GBK）解析，中文注释会导致命令错乱，请勿在 `.cmd` 中加中文；
-- Git Bash 环境如缺少 `uname`/`dirname` 等命令，标准 `bin/mvn` 脚本会失败，`./mvnw` 已内置兼容处理（直接以 `java` + classworlds 启动器调用 Maven）。
-
-> 已实测：`./mvnw -v` 输出 `Maven home: <项目路径>\tools\apache-maven-3.9.6`，`mvnw.cmd -v` 同样指向项目内置 Maven。
-
-### 5. 启动前端
-
-将 `ruoyi-ui` 中的页面复制到 RuoYi-Vue 项目对应位置，执行：
-
-```bash
-cd ruoyi-ui  # 或你的 RuoYi-Vue 项目目录
-npm install
-npm run dev
-```
-
-### 6. 访问验证
-
-- 后端服务: http://localhost:8080
-- 患者列表接口: http://localhost:8080/medical/patient/list
-- 代码生成器: http://localhost:8080/tool/gen/list
-
-## 核心功能
-
-### 患者管理模块
-- 患者信息增删改查
-- 按姓名、性别、电话、状态多条件查询
-- 分页查询
-- 数据校验（身份证、手机号格式）
-- Excel 导出
-
-### 诊疗信息模块
-- 诊疗记录增删改查
-- 关联患者信息查询
-- 按科室、医生、就诊日期筛选
-- 患者诊疗历史查询
-- Excel 导出
-
-### 代码生成器模块
-- 读取数据库表结构
-- 导入需要生成的表
-- 预览生成代码
-- 批量下载前后端代码（Java / XML / Vue / SQL）
-- 兼容 RuoYi-Vue 前端规范
-
-## 接口列表
-
-| 模块 | 接口 | 方法 | 路径 |
-|------|------|------|------|
-| 患者管理 | 分页查询列表 | GET | /medical/patient/list |
-| 患者管理 | 查询详情 | GET | /medical/patient/{id} |
-| 患者管理 | 新增 | POST | /medical/patient |
-| 患者管理 | 修改 | PUT | /medical/patient |
-| 患者管理 | 批量删除 | DELETE | /medical/patient/{ids} |
-| 患者管理 | 导出 | GET | /medical/patient/export |
-| 诊疗信息 | 分页查询列表 | GET | /medical/diagnosis/list |
-| 诊疗信息 | 查询详情 | GET | /medical/diagnosis/{id} |
-| 诊疗信息 | 按患者查询 | GET | /medical/diagnosis/patient/{patientId} |
-| 诊疗信息 | 新增 | POST | /medical/diagnosis |
-| 诊疗信息 | 修改 | PUT | /medical/diagnosis |
-| 诊疗信息 | 批量删除 | DELETE | /medical/diagnosis/{ids} |
-| 诊疗信息 | 导出 | GET | /medical/diagnosis/export |
-| 代码生成 | 查询生成列表 | GET | /tool/gen/list |
-| 代码生成 | 导入表 | POST | /tool/gen/importTable |
-| 代码生成 | 预览代码 | GET | /tool/gen/preview/{tableId} |
-| 代码生成 | 下载代码 | GET | /tool/gen/batchGenCode |
-
-详细接口说明请查看 [doc/接口文档.md](doc/接口文档.md)，部署说明请查看 [doc/部署说明.md](doc/部署说明.md)。
-
-## 代码生成器使用示例
-
-```bash
-# 1. 导入表结构
-curl -X POST "http://localhost:8080/tool/gen/importTable?tables=medical_patient,medical_diagnosis"
-
-# 2. 批量生成并下载代码
-curl -X GET "http://localhost:8080/tool/gen/batchGenCode?tables=medical_patient,medical_diagnosis" -o ruoyi_gen.zip
-```
-
-## 开发说明
-
-- 遵循若依框架开发规范
-- 分层架构：Controller → Service → Mapper → Database
-- 统一返回结果格式 AjaxResult
-- 分页查询统一使用 PageHelper
-- 全局异常处理 GlobalExceptionHandler
-- 参数校验使用 JSR-303 注解
-- Excel 导出使用 `@Excel` 注解 + `ExcelUtil`
-
-## 版本历史
-
-| 版本 | 日期 | 说明 |
+| 组件 | 版本 | 说明 |
 |------|------|------|
-| V1.0.0 | 2024-01 | 初始版本，完成患者和诊疗模块 |
-| V1.1.0 | 2024-09 | 新增代码生成器、前端页面、Excel 导出、部署说明 |
+| JDK | 8 | 后端运行 |
+| Maven | 3.9.x | 后端构建（`-Dmaven.test.skip=true` 可跳过测试） |
+| Node.js | 16.x | 前端 dev / build |
+| Python | 3.13 | AI 服务（`ruoyi-ai` venv，CPU；胸片训练用 `chest-train` venv，GPU） |
+| MySQL | 8.0 | 库名 `ruoyi_medical` |
+| Redis | 兼容实现 Memurai | 端口 6379 |
+| Ollama | 含 `qwen2.5:7b-instruct-q4_K_M` | 端口 11434 |
+
+---
+
+## 🚀 快速开始
+
+### 方式一：一键启动（推荐演示）
+直接**双击**项目根目录的 `start.bat`（它会依次拉起 MySQL → Memurai → 后端 → AI 服务 → 前端）。
+
+> 脚本**不再自动启动 Ollama**；如需 AI 病历生成 / 智能导诊的大模型能力，请手动执行 `D:\AI\Ollama\ollama.exe serve`。未启动时相应功能自动降级（病历走模板草稿、导诊走纯检索），其余功能不受影响。
+
+> ⚠️ 注意：不要从脚本 / 无头 Shell 整跑 `start.bat`（`start ""` 弹出的子窗口进程在无头环境不存活）；开发联调用下面的分步方式。
+
+### 方式二：分步启动（开发）
+依次启动，且后端务必显式指定端口：
+
+```bash
+# 1. 缓存（Memurai）
+D:/Memurai/memurai.exe
+
+# 2. 数据库（MySQL 8.0，库 ruoyi_medical 已导入 SQL）
+
+# 3. 后端（务必 --server.port=8080，防止环境变量注入随机端口）
+D:/jdk8/bin/java -jar ruoyi-admin/target/ruoyi-admin-1.0.0.jar --server.port=8080
+
+# 4. AI 服务
+cd ruoyi-ai
+C:/Users/ALVIN/.workbuddy/binaries/python/envs/ruoyi-ai/Scripts/python.exe -m uvicorn main:app --host 127.0.0.1 --port 8000
+
+# 5. Ollama（可选，仅 AI 病历生成 / 导诊问答需要；未启动则自动降级）
+D:/AI/Ollama/ollama.exe serve
+
+# 6. 前端
+cd ruoyi-ui && D:/nodejs16/npm.cmd run dev    # 开发模式 :8081
+# 或 D:/nodejs16/npm.cmd run build:prod        # 生产构建
+```
+
+### 方式三：容器化部署（Docker，跨机 / 生产推荐）
+
+> 适用：希望一条命令拉起整套环境，或迁移到 Linux 服务器。产物由 B-16 交付（`docker-compose.yml` + 三个 `Dockerfile` + `docker/mysql/init-db.sh`）。**本开发沙箱无 Docker，未实测 `docker build` / 启动，首次请在装有 Docker 的主机上执行验证**。
+
+```bash
+# 1. （可选）在 compose 同级放 .env 覆盖默认口令；缺省占位口令为 changeme_local_only
+#    echo DB_PASSWORD=你的库口令 > .env   # 缺省占位口令 changeme_local_only，可改为真实口令
+
+# 2. 构建并拉起全套（mysql / redis / backend / frontend / ai）
+docker compose up -d --build
+
+# 3. 访问前端
+#    浏览器打开 http://localhost:8081
+```
+
+要点：
+- 前端由 Nginx 托管 `dist/`，并把 `/medical`、`/login`、`/logout`、`/getInfo`、`/monitor`、`/system`、`/tool`、`/gen` 代理到 `backend:8080`，`/ai-uploads` 代理到 `ai:8000`（路径直转，**无 `/prod-api` 前缀**，与前端 `baseURL` 一致）。
+- 后端 `application.yml` 已支持 `DB_HOST` / `DB_PORT` / `REDIS_HOST` / `REDIS_PORT` / `AI_SERVICE_URL` 环境变量；容器间通过服务名互通，无需改代码。
+- MySQL 首次启动由 `docker/mysql/init-db.sh` 按依赖顺序灌入 `sql/` 下全部脚本（顺序见「部署说明」）。**模型权重（`ruoyi-ai/models/`）与向量库（`ruoyi-ai/data/`）通过卷挂载复用宿主机已训练产物，不打包进镜像**。
+- Ollama 跑在宿主机，`ai` 服务经 `host.docker.internal:11434` 访问；未启动时模块①（病历）与④（RAG）自动降级。
+
+**默认账号**：`admin / admin123`（当前未启用验证码）。
+
+---
+
+## 📁 目录结构
+
+```
+若依医疗/
+├── ruoyi-admin/          后端启动模块（打包为 ruoyi-admin-1.0.0.jar）
+├── ruoyi-system/        业务 domain / mapper / service / controller
+├── ruoyi-common/        公共工具
+├── ruoyi-framework/     安全、Redis、跨域等基础设施
+├── ruoyi-generator/     代码生成（裁剪保留）
+├── ruoyi-quartz/        定时任务
+├── ruoyi-ui/            前端 Vue2 工程（src/views/medical/*）
+├── ruoyi-ai/            AI 服务（FastAPI + 模型 + 数据）
+│   ├── main.py          网关入口
+│   ├── chest.py         胸片识别
+│   ├── rag.py           智能导诊
+│   ├── config.py        配置（特征顺序、类别、模型路径）
+│   ├── models/          训练好的模型与特征 / 类别 JSON
+│   └── data/chroma_db/  本地知识库向量
+├── doc/                 项目文档（需求 / 接口 / 部署 / 演示清单）
+├── docker-compose.yml   容器编排（mysql/redis/backend/frontend/ai 五服务）
+├── docker/              MySQL 初始化脚本（init-db.sh，按序灌库）
+├── ruoyi-admin/Dockerfile   后端多阶段构建镜像
+├── ruoyi-ui/Dockerfile      前端构建 + Nginx 托管镜像
+├── ruoyi-ai/Dockerfile      AI 服务镜像（模型 / 向量库走卷挂载）
+└── start.bat            一键启动脚本
+```
+
+---
+
+## 📚 模块说明
+
+| 模块 | 说明 |
+|------|------|
+| 患者管理 | 建档、身份证 / 手机号校验 |
+| 挂号管理 | 挂号占号源、退号、开始就诊 |
+| 排班管理 | 医生出诊排班与号源 |
+| 诊疗管理 | 诊疗草稿、诊断结果、AI 辅助写病历 |
+| 药品管理 | 药品目录、库存、近效期预警 |
+| 处方发药 | 开方（计价 / 过敏校验）、发药、退药 |
+| 随访管理 | 随访计划与记录 |
+| 站内信 | 消息发送与未读统计 |
+| 价目管理 | 诊疗项目价目表 |
+| 审计日志 | 关键操作留痕查询 |
+| 统计看板 | 运营指标聚合 |
+| 定时任务 | Quartz 任务调度 |
+
+---
+
+## 🤖 AI 能力说明
+
+- **病历生成**：调用本地 Ollama `qwen2.5:7b` 生成结构化病历；Ollama 未就绪时降级为模板草稿。
+- **风险预测**：输入 8 项临床特征，输出风险等级与概率（模型 `models/model_risk.pkl`）。
+- **胸片识别**：三分类 CNN（`models/chest_cnn.pth`），返回结果 + 置信度 + 三类概率，并落库。
+- **智能导诊**：本地知识库 RAG（`medical_rag_knowledge` 当前 18 条导诊 / 常见病知识，建库脚本内置 10 条种子，可在「导诊知识库」页增补并同步到向量库），相似度低于 0.55 阈值时拒答防幻觉。
+
+> ⚠️ AI 结果均为**辅助参考**，不替代专业医生诊断。
+
+---
+
+## 📄 文档导航
+
+- [项目需求文档](doc/项目需求文档.md)
+- [详细设计说明书](doc/详细设计说明书.md)
+- [运行演示流程与检查清单](doc/运行演示流程与检查清单.html)
+- [接口文档](doc/接口文档.md)
+- [部署说明](doc/部署说明.md)
+- [AI 模块部署说明](doc/AI模块部署说明.md)
+- [测试记录](doc/测试记录.md)
+- [优化升级方案](doc/优化升级方案_精炼分析.html)
+
+---
+
+## ⚠️ 已知边界
+
+1. RBAC 仅到**菜单级**（角色 → 菜单权限），未做按钮 / 数据级隔离。
+2. **未启用验证码**（按需求裁剪）。
+3. 胸片少数类（COVID-19）precision≈0.83，极端样本可能误判，持续优化中。
+4. 演示数据含故意过期的“板蓝根颗粒”与种子业务数据，用于演示拦截与看板。
+5. 容器化编排（B-16 的 `docker-compose.yml` + 三个 `Dockerfile`）已随项目提供，**尚未在本开发环境实测 `docker build` / 启动**，首次部署请在装有 Docker 的主机上执行 `docker compose up -d --build` 验证。
+
+---
+
+## 📜 声明
+
+本项目为教学 / 演示用途，患者信息均为模拟数据；AI 模块输出仅作辅助，不承担任何医疗诊断责任。

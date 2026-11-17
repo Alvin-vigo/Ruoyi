@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.validation.BindException;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -39,6 +40,24 @@ public class GlobalExceptionHandler {
             message = error.getDefaultMessage();
         }
         log.error("参数校验异常: {}", message, e);
+        return AjaxResult.error(message);
+    }
+
+    /**
+     * 请求体参数校验异常（@Validated + @RequestBody 触发）
+     *
+     * <p>注意：这是 MethodArgumentNotValidException，而非 BindException。
+     * 若此处不处理，@Pattern 一类字段级校验失败会被 Exception 兜底成
+     * “系统繁忙，请稍后重试”，前端拿不到具体哪个字段不合法（AC-02 体验受损）。
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public AjaxResult handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        String message = "参数校验失败";
+        if (e.getBindingResult().hasErrors()) {
+            ObjectError error = e.getBindingResult().getAllErrors().get(0);
+            message = error.getDefaultMessage();
+        }
+        log.error("请求体参数校验异常: {}", message, e);
         return AjaxResult.error(message);
     }
 

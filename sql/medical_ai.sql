@@ -28,7 +28,7 @@ create table medical_ai_record (
   PRIMARY KEY (record_id),
   KEY idx_ai_record_patient (patient_id),
   KEY idx_ai_record_status (status, engine)
-) engine=innodb comment = 'AI病历生成记录表';
+) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment = 'AI病历生成记录表';
 
 DROP TABLE IF EXISTS medical_risk_predict;
 create table medical_risk_predict (
@@ -47,26 +47,32 @@ create table medical_risk_predict (
   PRIMARY KEY (predict_id),
   KEY idx_risk_patient (patient_id),
   KEY idx_risk_result (result_label, disease_name)
-) engine=innodb comment = '疾病风险预测记录表';
+) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment = '疾病风险预测记录表';
 
+-- =============================================================
+-- 胸片 AI 初筛记录表（三分类：COVID-19 / NORMAL / Viral Pneumonia）
+-- ⚠ 结构必须与此二处严格一致，否则会出现 Unknown column（AC-13）：
+--    1) ruoyi-system/src/main/java/com/ruoyi/system/domain/MedicalChestXray.java
+--    2) ruoyi-system/src/main/resources/mapper/MedicalChestXrayMapper.xml
+-- 历史二分类列（result_label / prob_normal / prob_abnormal）已于三分类改造中废弃，
+-- 全新安装不再创建；老库升级由 sql/medical_patch_v4.sql 处理。
+-- =============================================================
 DROP TABLE IF EXISTS medical_chest_xray;
 create table medical_chest_xray (
   xray_id          BIGINT NOT NULL AUTO_INCREMENT COMMENT '记录ID',
   patient_id       BIGINT DEFAULT NULL COMMENT '患者ID',
-  img_url          VARCHAR(255) DEFAULT '' COMMENT '影像存储路径/URL',
-  predict_result   VARCHAR(50)  DEFAULT '' COMMENT '判定结果文案（正常/异常）',
-  result_label     VARCHAR(20)  DEFAULT '' COMMENT '结果编码（normal/abnormal）',
-  confidence       DECIMAL(6,4) DEFAULT NULL COMMENT '置信度',
-  prob_normal      DECIMAL(6,4) DEFAULT NULL COMMENT '正常类概率',
-  prob_abnormal    DECIMAL(6,4) DEFAULT NULL COMMENT '异常类概率',
+  img_url          VARCHAR(255) DEFAULT '' COMMENT '影像访问路径（/ai-uploads/xxx.png）',
+  predict_result   VARCHAR(50)  DEFAULT '' COMMENT '三分类结果文案（COVID-19/NORMAL/Viral Pneumonia）',
+  confidence       DECIMAL(6,4) DEFAULT NULL COMMENT '最大类置信度',
+  probs_json       VARCHAR(500) DEFAULT '' COMMENT '三分类全概率 JSON，如 {"COVID-19":0.01,"NORMAL":0.97,"Viral Pneumonia":0.02}',
   device           VARCHAR(20)  DEFAULT '' COMMENT '推理设备（cuda/cpu）',
   elapsed_ms       BIGINT DEFAULT NULL COMMENT '推理耗时（毫秒）',
   create_by        VARCHAR(64)  DEFAULT '' COMMENT '创建者',
   create_time      DATETIME DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (xray_id),
   KEY idx_xray_patient (patient_id),
-  KEY idx_xray_label (result_label)
-) engine=innodb comment = '胸片AI初筛记录表';
+  KEY idx_xray_result (predict_result)
+) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment = '胸片AI初筛记录表（三分类）';
 
 DROP TABLE IF EXISTS medical_rag_knowledge;
 create table medical_rag_knowledge (
@@ -81,6 +87,6 @@ create table medical_rag_knowledge (
   PRIMARY KEY (knowledge_id),
   KEY idx_rag_synced (synced),
   KEY idx_rag_category (category)
-) engine=innodb comment = 'RAG导诊知识条目表';
+) engine=innodb default charset=utf8mb4 collate=utf8mb4_0900_ai_ci comment = 'RAG导诊知识条目表';
 
 commit;

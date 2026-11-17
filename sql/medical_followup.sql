@@ -19,7 +19,7 @@ CREATE TABLE medical_followup (
   PRIMARY KEY (followup_id),
   KEY idx_patient_id (patient_id),
   KEY idx_followup_date (followup_date)
-) ENGINE=INNODB COMMENT='患者随访记录表';
+) ENGINE=INNODB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='患者随访记录表';
 
 -- 示例数据（可选）
 INSERT INTO medical_followup (patient_id, followup_date, followup_type, content, next_followup_date, status, followup_person, create_time)
