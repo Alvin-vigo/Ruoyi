@@ -100,8 +100,8 @@ cd ruoyi-ui && D:/nodejs16/npm.cmd run dev    # 开发模式 :8081
 > 适用：希望一条命令拉起整套环境，或迁移到 Linux 服务器。产物由 B-16 交付（`docker-compose.yml` + 三个 `Dockerfile` + `docker/mysql/init-db.sh`）。**本开发沙箱无 Docker，未实测 `docker build` / 启动，首次请在装有 Docker 的主机上执行验证**。
 
 ```bash
-# 1. （可选）在 compose 同级放 .env 覆盖默认口令；缺省占位口令为 changeme_local_only
-#    echo DB_PASSWORD=你的库口令 > .env   # 缺省占位口令 changeme_local_only，可改为真实口令
+# 1. （可选）在 compose 同级放 .env 覆盖默认口令；模板见 .env.example
+#    cp .env.example .env   然后编辑其中的 DB_PASSWORD
 
 # 2. 构建并拉起全套（mysql / redis / backend / frontend / ai）
 docker compose up -d --build
@@ -116,7 +116,7 @@ docker compose up -d --build
 - MySQL 首次启动由 `docker/mysql/init-db.sh` 按依赖顺序灌入 `sql/` 下全部脚本（顺序见「部署说明」）。**模型权重（`ruoyi-ai/models/`）与向量库（`ruoyi-ai/data/`）通过卷挂载复用宿主机已训练产物，不打包进镜像**。
 - Ollama 跑在宿主机，`ai` 服务经 `host.docker.internal:11434` 访问；未启动时模块①（病历）与④（RAG）自动降级。
 
-**默认账号**：`admin / admin123`（当前未启用验证码）。
+**默认账号**：`admin`，口令见 `.env.example`（首次部署请自行修改；当前未启用验证码）。
 
 ---
 
